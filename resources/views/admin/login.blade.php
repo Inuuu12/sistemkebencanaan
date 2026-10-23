@@ -32,38 +32,36 @@
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased">
-
     <div class="grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full">
         
         <!-- SISI KIRI: INFORMASI & BRANDING -->
-        <div class="hidden lg:flex flex-col justify-between bg-[#ea5921] p-12 xl:p-16 text-white relative">
+        <div class="hidden lg:flex flex-col justify-between bg-slate-900 p-12 xl:p-16 text-white relative overflow-hidden">
             
+            <!-- Background Image dengan Overlay -->
+            <div class="absolute inset-0 z-0">
+                <img src="{{ asset('icon/backlogin.png') }}" alt="Gedung BPBD Kabupaten Bogor" class="w-full h-full object-cover">
+                <!-- Overlay gradient multi-layer untuk kontras teks yang optimal dan estetika elegan -->
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-600/85 via-slate-900/60 to-slate-950/70"></div>
+                <div class="absolute inset-0 bg-[#ea5921]/30 mix-blend-multiply"></div>
+            </div>
+
             <!-- Logo & Nama Aplikasi -->
-            <div class="flex items-center gap-3.5">
-                <div class="w-11 h-11 rounded-xl bg-white/10 p-1.5 flex items-center justify-center border border-white/20">
+            <div class="relative z-10 flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-md p-1.5 flex items-center justify-center border border-white/25 shadow-lg">
                     <img src="{{ asset('images/aksara-logo.png') }}" alt="Logo AKSARA" class="w-full h-full object-contain">
                 </div>
                 <div>
-                    <h1 class="font-extrabold text-lg leading-tight tracking-tight">AKSARA BOGOR</h1>
-                    <p class="text-xs text-orange-100">Kabupaten Bogor</p>
+                    <h1 class="font-extrabold text-lg leading-tight tracking-tight drop-shadow-sm">AKSARA BOGOR</h1>
+                    <p class="text-xs text-orange-200 drop-shadow-sm">Kabupaten Bogor</p>
                 </div>
             </div>
 
             <!-- Teks Utama -->
-            <div class="my-auto max-w-md py-8">
-                <span class="inline-block text-xs font-semibold uppercase tracking-wider text-orange-200 mb-2">
-                    Portal Internal Petugas
-                </span>
-                <h2 class="text-3xl font-extrabold leading-snug mb-3">
+            <div class="relative z-10 my-auto max-w-md py-8">
+                <h2 class="text-3xl xl:text-4xl font-extrabold leading-snug mb-3 drop-shadow-md">
                     Sistem Informasi Kebencanaan Kabupaten Bogor
                 </h2>
-                <p class="text-sm text-orange-100 leading-relaxed">
-                    Sistem pemantauan, verifikasi laporan masyarakat, dan koordinasi penanganan kejadian bencana di seluruh wilayah Kabupaten Bogor.
-                </p>
             </div>
-
-            <!-- Catatan Bawah -->
-           
         </div>
 
         <!-- SISI KANAN: FORM LOGIN -->

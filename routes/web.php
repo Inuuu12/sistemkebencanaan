@@ -24,3 +24,11 @@ Route::get('/api/boundaries', [PublicPortalController::class, 'getBoundaries'])-
 Route::get('/login', [PublicPortalController::class, 'login'])->name('public.login');
 Route::post('/login', [PublicPortalController::class, 'authenticate'])->name('public.login.store');
 Route::post('/logout', [PublicPortalController::class, 'logout'])->name('public.logout');
+
+// Admin Routes (Panel Admin Sederhana & Ringkas)
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\AdminController::class, 'dashboard']);
+    Route::post('/laporan/{id}/status', [\App\Http\Controllers\AdminController::class, 'updateStatus'])->name('laporan.status');
+});
+
