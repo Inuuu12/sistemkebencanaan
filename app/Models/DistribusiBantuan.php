@@ -47,6 +47,6 @@ class DistribusiBantuan extends Model
 
     public function sender(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'dikirim_oleh', 'id_user')->withTrashed();
+        return $this->belongsTo(User::class, 'dikirim_oleh', 'id_user');
     }
 }

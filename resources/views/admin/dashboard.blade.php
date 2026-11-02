@@ -1,228 +1,315 @@
 @extends('layouts.admin')
 
 @section('title', 'Dashboard Administrasi')
-@section('header_title', 'Ikhtisar Kebencanaan Kabupaten Bogor')
+@section('header_title', 'Pusat Komando & Pemantauan Kebencanaan')
+
+@push('styles')
+<!-- Leaflet CSS untuk GIS Live Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    /* Styling Peta GIS */
+    #liveGisMap {
+        height: 480px;
+        width: 100%;
+        border-radius: 1rem;
+        z-index: 10;
+    }
+    .leaflet-popup-content-wrapper {
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        padding: 0.25rem;
+    }
+    .leaflet-popup-content {
+        margin: 0.75rem 1rem;
+        line-height: 1.4;
+    }
+</style>
+@endpush
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-8 pb-12">
 
-    <!-- 1. KARTU STATISTIK RINGKAS (KUNKER STYLE) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- HEADER TITLE & LIVE TIME -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Monitoring</h1>
+        </div>
+    </div>
+
+    <!-- 1. KARTU STATISTIK RINGKAS UTAMA -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
         
-        <!-- Total Laporan -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <!-- Total Bencana -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between hover:border-slate-300 transition-colors">
             <div>
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Aduan</p>
-                <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">{{ number_format($totalReports) }}</h3>
-                <p class="text-[11px] text-slate-400 mt-0.5">Semua laporan terdata</p>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Bencana</p>
+                <h3 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{{ number_format($totalBencana ?? 8) }}</h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">Jenis terdata</p>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-orange-50 text-[#ea5921] border border-orange-100 flex items-center justify-center shrink-0">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
+            
+        </div>
+
+        <!-- Total Laporan -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between hover:border-slate-300 transition-colors">
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Aduan</p>
+                <h3 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{{ number_format($totalReports ?? 13) }}</h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">Aduan masyarakat</p>
             </div>
         </div>
 
-        <!-- Menunggu Verifikasi (Pending) -->
-        <a href="{{ route('admin.dashboard', ['status' => 'Pending']) }}" 
-            class="bg-white p-5 rounded-2xl border border-amber-200/80 shadow-xs flex items-center justify-between hover:border-amber-300 hover:shadow-sm transition-all group">
+        <!-- Total Pengungsi -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between hover:border-slate-300 transition-colors">
             <div>
-                <div class="flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                    <p class="text-xs font-semibold text-amber-700 uppercase tracking-wider">Menunggu (Pending)</p>
-                </div>
-                <h3 class="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1">{{ number_format($pendingReports) }}</h3>
-                <p class="text-[11px] text-slate-400 mt-0.5 group-hover:text-amber-600 transition-colors">Perlu verifikasi &bull; Klik filter &rarr;</p>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Pengungsi</p>
+                <h3 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{{ number_format($totalPengungsi ?? 12) }}</h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">Jiwa di posko</p>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/>
-                </svg>
-            </div>
-        </a>
+        </div>
 
-        <!-- Sedang Ditangani (Handling) -->
-        <a href="{{ route('admin.dashboard', ['status' => 'Handling']) }}" 
-            class="bg-white p-5 rounded-2xl border border-blue-200/80 shadow-xs flex items-center justify-between hover:border-blue-300 hover:shadow-sm transition-all group">
+        <!-- Total Korban Jiwa -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between hover:border-slate-300 transition-colors">
             <div>
-                <p class="text-xs font-semibold text-blue-700 uppercase tracking-wider">Sedang Ditangani</p>
-                <h3 class="text-2xl sm:text-3xl font-extrabold text-blue-600 mt-1">{{ number_format($handlingReports) }}</h3>
-                <p class="text-[11px] text-slate-400 mt-0.5 group-hover:text-blue-600 transition-colors">Tim TRC di lokasi &bull; Klik filter &rarr;</p>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Korban Jiwa</p>
+                <h3 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{{ number_format($totalKorbanJiwa ?? 0) }}</h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">Meninggal dunia</p>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-            </div>
-        </a>
-
-        <!-- Selesai (Completed) -->
-        <a href="{{ route('admin.dashboard', ['status' => 'Selesai']) }}" 
-            class="bg-white p-5 rounded-2xl border border-emerald-200/80 shadow-xs flex items-center justify-between hover:border-emerald-300 hover:shadow-sm transition-all group">
-            <div>
-                <p class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Penanganan Selesai</p>
-                <h3 class="text-2xl sm:text-3xl font-extrabold text-emerald-600 mt-1">{{ number_format($completedReports) }}</h3>
-                <p class="text-[11px] text-slate-400 mt-0.5 group-hover:text-emerald-600 transition-colors">Tuntas terkondisikan &bull; Klik filter &rarr;</p>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </div>
-        </a>
+        </div>
 
     </div>
 
-    <!-- 2. FILTER & PENCARIAN SEDERHANA -->
-    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-        <form method="GET" action="{{ route('admin.dashboard') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            
-            <!-- Input Cari Kata Kunci -->
-            <div class="lg:col-span-2">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cari Aduan / Pelapor</label>
-                <div class="relative">
-                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari judul, nama pelapor, atau alamat..." 
-                        class="w-full text-xs sm:text-sm pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-[#ea5921] focus:ring-1 focus:ring-[#ea5921] outline-none transition">
-                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+
+
+    <!-- 3. PETA SEBARAN BENCANA INTERAKTIF (GIS LIVE MAP) -->
+    <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+            <div>
+                <h2 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-[#ea5921]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
                     </svg>
-                </div>
+                    Peta Sebaran Bencana Interaktif (GIS Live Map)
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5">Visualisasi realtime titik kejadian, zonasi risiko rawan, dan lokasi posko logistik BPBD</p>
             </div>
 
-            <!-- Filter Status -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Status Laporan</label>
-                <select name="status" class="w-full text-xs sm:text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 focus:bg-white focus:border-[#ea5921] outline-none transition">
-                    <option value="">Semua Status</option>
-                    <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending (Menunggu)</option>
-                    <option value="Handling" {{ request('status') == 'Handling' ? 'selected' : '' }}>Handling (Penanganan)</option>
-                    <option value="Selesai" {{ request('status') == 'Selesai' ? 'selected' : '' }}>Selesai</option>
-                </select>
+            <!-- Layer Toggle Control (Filter Checklist) -->
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+                <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer select-none">
+                    <input type="checkbox" id="toggleDisasters" checked class="rounded text-[#ea5921] focus:ring-orange-500 cursor-pointer">
+                    <span class="font-medium text-slate-700">Titik Bencana ({{ count($mapReports) }})</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer select-none">
+                    <input type="checkbox" id="toggleZones" checked class="rounded text-red-600 focus:ring-red-500 cursor-pointer">
+                    <span class="font-medium text-slate-700">Zonasi Rawan ({{ count($zonasiList) }})</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer select-none">
+                    <input type="checkbox" id="togglePosko" checked class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer">
+                    <span class="font-medium text-slate-700">Posko & Logistik ({{ count($poskoList) }})</span>
+                </label>
             </div>
+        </div>
 
-            <!-- Filter Jenis Bencana -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Jenis Bencana</label>
-                <select name="bencana_id" class="w-full text-xs sm:text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 focus:bg-white focus:border-[#ea5921] outline-none transition">
-                    <option value="">Semua Jenis Bencana</option>
-                    @foreach($disasters as $d)
-                    <option value="{{ $d->id_bencana }}" {{ request('bencana_id') == $d->id_bencana ? 'selected' : '' }}>
-                        {{ $d->nama_bencana }}
-                    </option>
-                    @endforeach
-                </select>
+        <!-- Wadah Leaflet Map -->
+        <div id="liveGisMap" class="shadow-inner border border-slate-200"></div>
+
+        <!-- Keterangan Legend Peta di Bawah -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600">
+            <div class="flex items-center gap-2">
+                <span class="w-3.5 h-3.5 rounded-full bg-[#ea5921] border-2 border-white shadow-xs"></span>
+                <span><strong>Titik Kejadian:</strong> Laporan kejadian diverifikasi & dipantau</span>
             </div>
-
-            <!-- Tombol Submit & Reset -->
-            <div class="flex items-end gap-2">
-                <button type="submit" 
-                    class="flex-1 py-2 px-3.5 rounded-xl bg-[#ea5921] hover:bg-[#d94812] text-white text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-                    <span>Filter</span>
-                </button>
-                @if(request()->hasAny(['q', 'status', 'bencana_id', 'kecamatan_id']))
-                <a href="{{ route('admin.dashboard') }}" 
-                    class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition" title="Reset Filter">
-                    Reset
-                </a>
-                @endif
+            <div class="flex items-center gap-2">
+                <span class="w-3.5 h-3.5 rounded-full bg-red-500/80 border border-red-600"></span>
+                <span><strong>Zonasi Risiko:</strong> Merah (Tinggi), Kuning (Sedang), Hijau (Aman)</span>
             </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3.5 h-3.5 rounded-full bg-blue-600 border-2 border-white shadow-xs"></span>
+                <span><strong>Posko & Gudang:</strong> Titik evakuasi pengungsi & cadangan logistik</span>
+            </div>
+        </div>
 
-        </form>
     </div>
 
-    <!-- 3. TABEL DATA LAPORAN (KUNKER MINIMALIST) -->
+    <!-- 4. GRAFIK & STATISTIK TREN (CHARTS) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Grafik 1: Tren Kejadian Bencana dari Tahun ke Tahun (Persis Seperti Gambar User) -->
+        <div class="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <div>
+                <!-- Header Grafik Style User -->
+                <div class="text-center mb-4">
+                    <h3 class="font-black text-sm sm:text-base text-slate-800 uppercase tracking-wide">
+                        Grafik Kejadian Bencana dari Tahun ke Tahun
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Tren frekuensi bencana Kabupaten Bogor (2018 - 2026)</p>
+
+                    <!-- Custom Legend Box persis seperti gambar contoh -->
+                    <div class="inline-flex items-center gap-2 mt-3 px-3 py-1 rounded-md border border-slate-200 bg-slate-50/70">
+                        <div class="w-8 h-3.5 rounded-xs border-2 border-[#166534] bg-[#fde047]"></div>
+                        <span class="text-xs font-bold text-slate-700">Kejadian Bencana</span>
+                    </div>
+                </div>
+
+                <!-- Canvas Chart -->
+                <div class="relative w-full h-64 sm:h-72">
+                    <canvas id="yearlyDisasterChart"></canvas>
+                </div>
+            </div>
+            <div class="pt-3 border-t border-slate-100 text-[11px] text-slate-400 text-center">
+                Sumber: Rekapitulasi Data PUSDALOPS-PB BPBD Kabupaten Bogor
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. STATUS STOK LOGISTIK KRITIS -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-5">
+            <div>
+                <h3 class="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    Status Stok Bantuan Logistik Kritis
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Monitoring ketersediaan 4 kategori bantuan darurat utama di Gudang BPBD</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">
+                Gudang Induk Cibinong
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @foreach($logisticsStock as $item)
+            <div class="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-800">{{ $item['category'] }}</span>
+                    @if($item['status'] === 'KRITIS')
+                    <span class="px-2 py-0.5 text-[10px] font-black rounded-full bg-red-100 text-red-700 animate-pulse">
+                        {{ $item['status'] }}
+                    </span>
+                    @elseif($item['status'] === 'Waspada')
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800">
+                        {{ $item['status'] }}
+                    </span>
+                    @else
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">
+                        {{ $item['status'] }}
+                    </span>
+                    @endif
+                </div>
+
+                <div class="flex items-baseline justify-between mb-1.5">
+                    <span class="text-xl font-extrabold text-slate-900">{{ number_format($item['stock']) }} <span class="text-xs font-medium text-slate-500">{{ $item['unit'] }}</span></span>
+                    <span class="text-xs font-bold text-slate-500">{{ $item['percent'] }}%</span>
+                </div>
+
+                <!-- Progress Bar Stok -->
+                <div class="w-full h-2 rounded-full bg-slate-200 overflow-hidden mb-2">
+                    @php
+                        $barColor = $item['status'] === 'KRITIS' ? 'bg-red-500' : ($item['status'] === 'Waspada' ? 'bg-amber-500' : 'bg-emerald-500');
+                    @endphp
+                    <div class="h-full rounded-full {{ $barColor }}" style="width: {{ $item['percent'] }}%"></div>
+                </div>
+
+                <p class="text-[11px] text-slate-500 truncate" title="{{ $item['items'] }}">
+                    {{ $item['items'] }}
+                </p>
+            </div>
+            @endforeach
+        </div>
+    </div>
+
+    <!-- 6. TABEL LAPORAN TERBARU & TINDAKAN CEPAT (RECENT ACTIVITIES / FEEDS) -->
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         
-        <!-- Header Tabel -->
-        <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-                <h2 class="font-bold text-base text-slate-900">Daftar Laporan Kejadian Bencana</h2>
-                <p class="text-xs text-slate-500">Menampilkan {{ $reports->total() }} laporan terdata di seluruh wilayah Kabupaten Bogor</p>
+                <h3 class="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    Aduan Warga Masuk Terbaru 
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Daftar laporan darurat yang memerlukan respon cepat, validasi, dan penanganan Tim Reaksi Cepat (TRC)</p>
             </div>
-            
-            <div class="text-xs text-slate-500 font-medium">
-                Halaman {{ $reports->currentPage() }} dari {{ $reports->lastPage() }}
-            </div>
+            <a href="{{ route('admin.dashboard', ['status' => 'Pending']) }}" 
+                class="text-xs font-bold text-orange-600 hover:text-orange-700 inline-flex items-center gap-1">
+                <span>Lihat Semua Aduan Pending</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
         </div>
 
-        <!-- Tabel Responsif -->
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs sm:text-sm">
-                <thead class="bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200/80">
+                <thead class="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                     <tr>
-                        <th class="py-3 px-4">ID & Waktu</th>
+                        <th class="py-3 px-4">Waktu & Bukti Foto</th>
                         <th class="py-3 px-4">Jenis Bencana</th>
-                        <th class="py-3 px-4">Judul & Pelapor</th>
-                        <th class="py-3 px-4">Wilayah</th>
-                        <th class="py-3 px-4 text-center">Korban</th>
+                        <th class="py-3 px-4">Judul Aduan & Pelapor</th>
+                        <th class="py-3 px-4">Wilayah & Koordinat GPS</th>
                         <th class="py-3 px-4 text-center">Status</th>
-                        <th class="py-3 px-4 text-center">Aksi Cepat</th>
+                        <th class="py-3 px-4 text-center">Tindakan Cepat</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
-                    @forelse($reports as $r)
-                    <tr class="hover:bg-slate-50/60 transition-colors">
+                    @forelse($recentReports as $r)
+                    <tr class="hover:bg-slate-50/80 transition-colors">
                         
-                        <!-- ID & Waktu -->
-                        <td class="py-3.5 px-4 whitespace-nowrap">
-                            <span class="font-mono font-bold text-slate-900 block">#{{ $r->id_laporan }}</span>
-                            <span class="text-[11px] text-slate-400">
-                                {{ $r->created_at ? $r->created_at->format('d/m/Y H:i') : '-' }}
-                            </span>
-                        </td>
-
-                        <!-- Jenis Bencana -->
-                        <td class="py-3.5 px-4 whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#ea5921]"></span>
-                                <span class="font-semibold text-slate-800">
-                                    {{ $r->bencana->nama_bencana ?? 'Bencana Lainnya' }}
-                                </span>
+                        <!-- Waktu & Foto Thumbnail -->
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <div class="flex items-center gap-2.5">
+                                @php
+                                    $photo = null;
+                                    if ($r->foto_laporan) {
+                                        $decoded = is_array($r->foto_laporan) ? $r->foto_laporan : json_decode($r->foto_laporan, true);
+                                        $photo = is_array($decoded) ? ($decoded[0] ?? null) : $r->foto_laporan;
+                                    }
+                                @endphp
+                                @if($photo)
+                                <img src="{{ asset($photo) }}" alt="Foto" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0">
+                                @else
+                                <div class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                    BPBD
+                                </div>
+                                @endif
+                                <div>
+                                    <span class="font-mono font-bold text-slate-900 block">#{{ $r->id_laporan }}</span>
+                                    <span class="text-[11px] text-slate-400">{{ $r->created_at ? $r->created_at->diffForHumans() : '-' }}</span>
+                                </div>
                             </div>
                         </td>
 
-                        <!-- Judul & Pelapor -->
-                        <td class="py-3.5 px-4 max-w-xs">
-                            <p class="font-semibold text-slate-900 truncate leading-snug" title="{{ $r->judul }}">
+                        <!-- Jenis Bencana -->
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="font-bold text-slate-800 block">
+                                {{ $r->bencana->nama_bencana ?? 'Bencana Lain' }}
+                            </span>
+                        </td>
+
+                        <!-- Judul Aduan & Pelapor -->
+                        <td class="py-3 px-4 max-w-xs">
+                            <p class="font-semibold text-slate-900 truncate" title="{{ $r->judul }}">
                                 {{ $r->judul }}
                             </p>
                             <p class="text-[11px] text-slate-500 truncate">
-                                Pelapor: <span class="font-medium text-slate-700">{{ $r->nama_pelapor ?: 'Warga' }}</span> 
+                                Pelapor: <span class="text-slate-700 font-medium">{{ $r->nama_pelapor ?: 'Warga' }}</span>
                                 @if($r->nomor_telepon)
                                 &bull; {{ $r->nomor_telepon }}
                                 @endif
                             </p>
                         </td>
 
-                        <!-- Wilayah -->
-                        <td class="py-3.5 px-4 whitespace-nowrap">
+                        <!-- Wilayah & Koordinat GPS -->
+                        <td class="py-3 px-4 whitespace-nowrap">
                             <p class="font-semibold text-slate-800">
-                                Kec. {{ $r->kecamatan->nama_kecamatan ?? '-' }}
+                                Kec. {{ $r->kecamatan->nama_kecamatan ?? '-' }}, Desa {{ $r->kelurahan->nama_kelurahan ?? '-' }}
                             </p>
-                            <p class="text-[11px] text-slate-500">
-                                Desa/Kel. {{ $r->kelurahan->nama_kelurahan ?? '-' }}
+                            <p class="text-[11px] font-mono text-slate-500">
+                                GPS: {{ round($r->latitude, 4) }}, {{ round($r->longitude, 4) }}
                             </p>
-                        </td>
-
-                        <!-- Korban -->
-                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                            @if(($r->jumlah_korban ?? 0) > 0)
-                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-                                <svg class="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>
-                                {{ $r->jumlah_korban }} Jiwa
-                            </span>
-                            @else
-                            <span class="text-slate-400 text-xs">Nihil</span>
-                            @endif
                         </td>
 
                         <!-- Status Badge -->
-                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
                             @if($r->status === 'Pending')
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
                                     Pending
                                 </span>
                             @elseif($r->status === 'Handling')
@@ -230,33 +317,25 @@
                                     <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                                     Handling
                                 </span>
-                            @elseif($r->status === 'Selesai')
+                            @else
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                     Selesai
                                 </span>
-                            @else
-                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-                                    {{ $r->status }}
-                                </span>
                             @endif
                         </td>
 
-                        <!-- Aksi Cepat -->
-                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                            <div class="inline-flex items-center gap-1">
-                                <!-- Tombol Lihat Detail Modal -->
+                        <!-- Tombol Cepat Tinjau / Validasi -->
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            <div class="inline-flex items-center gap-2">
                                 <button type="button" onclick="openDetailModal({{ json_encode($r) }})" 
-                                    class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition" 
-                                    title="Lihat Detail Aduan">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    class="px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-[#ea5921] font-bold text-xs transition border border-orange-200/80">
+                                    Tinjau / Validasi
                                 </button>
-
-                                <!-- Form Ubah Status Cepat -->
                                 <form action="{{ route('admin.laporan.status', $r->id_laporan) }}" method="POST" class="inline-block">
                                     @csrf
                                     <select name="status" onchange="this.form.submit()" 
-                                        class="text-[11px] font-semibold py-1 px-2 rounded-lg border border-slate-200 bg-white hover:border-slate-300 text-slate-700 cursor-pointer outline-none transition">
+                                        class="text-xs font-semibold py-1 px-2 rounded-lg border border-slate-200 bg-white hover:border-slate-300 text-slate-700 cursor-pointer outline-none transition" title="Ubah Status Cepat">
                                         <option value="Pending" {{ $r->status == 'Pending' ? 'selected' : '' }}>Pending</option>
                                         <option value="Handling" {{ $r->status == 'Handling' ? 'selected' : '' }}>Handling</option>
                                         <option value="Selesai" {{ $r->status == 'Selesai' ? 'selected' : '' }}>Selesai</option>
@@ -268,12 +347,8 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="py-12 text-center text-slate-400">
-                            <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            <p class="font-semibold text-slate-600">Tidak ada data laporan yang sesuai filter.</p>
-                            <p class="text-xs text-slate-400 mt-1">Coba sesuaikan kata kunci atau bersihkan filter pencarian.</p>
+                        <td colspan="6" class="py-8 text-center text-slate-400">
+                            Belum ada laporan darurat yang masuk.
                         </td>
                     </tr>
                     @endforelse
@@ -281,92 +356,29 @@
             </table>
         </div>
 
-        <!-- Pagination -->
-        @if($reports->hasPages())
-        <div class="p-4 border-t border-slate-100">
-            {{ $reports->links() }}
-        </div>
-        @endif
-
-    </div>
-
-    <!-- 4. STATISTIK PER JENIS BENCANA (BOTTOM WIDGET) -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        
-        <!-- Bar Sebaran Bencana -->
-        <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-            <h3 class="font-bold text-sm text-slate-900 mb-1">Sebaran Jenis Bencana Terbanyak</h3>
-            <p class="text-xs text-slate-500 mb-4">Frekuensi kejadian bencana berdasarkan aduan yang masuk</p>
-
-            <div class="space-y-3.5">
-                @foreach($disasterStats as $ds)
-                @php
-                    $pct = $totalReports > 0 ? round(($ds->laporan_bencana_count / $totalReports) * 100) : 0;
-                @endphp
-                <div>
-                    <div class="flex items-center justify-between text-xs font-semibold mb-1">
-                        <span class="text-slate-800">{{ $ds->nama_bencana }}</span>
-                        <span class="text-slate-500">{{ $ds->laporan_bencana_count }} Laporan ({{ $pct }}%)</span>
-                    </div>
-                    <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                        <div class="h-full rounded-full bg-[#ea5921]" style="width: {{ $pct }}%"></div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-
-        <!-- Info Siaga & Kontak TRC BPBD -->
-        <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-2xl border border-slate-700 shadow-xs flex flex-col justify-between">
-            <div>
-                <div class="w-10 h-10 rounded-xl bg-white/10 p-2 flex items-center justify-center border border-white/15 mb-3">
-                    <img src="{{ asset('images/aksara-logo.png') }}" alt="BPBD" class="w-full h-full object-contain">
-                </div>
-                <h4 class="font-bold text-base leading-tight mb-1">PUSDALOPS-PB 24/7</h4>
-                <p class="text-xs text-slate-300 leading-relaxed mb-4">
-                    Pusat Pengendalian Operasi Penanggulangan Bencana Kabupaten Bogor selalu siaga melayani koordinasi evakuasi dan logistik.
-                </p>
-                
-                <div class="space-y-2 text-xs">
-                    <div class="flex items-center justify-between py-1.5 px-3 rounded-lg bg-white/5 border border-white/10">
-                        <span class="text-slate-300">Call Center BPBD:</span>
-                        <span class="font-bold text-orange-400">021-87914800</span>
-                    </div>
-                    <div class="flex items-center justify-between py-1.5 px-3 rounded-lg bg-white/5 border border-white/10">
-                        <span class="text-slate-300">WhatsApp Darurat:</span>
-                        <span class="font-bold text-emerald-400">0812-1010-9008</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pt-4 border-t border-white/10 mt-4 text-[11px] text-slate-400">
-                Kabupaten Bogor Tangguh Bencana
-            </div>
-        </div>
-
     </div>
 
 </div>
 
-<!-- 5. MODAL DETAIL LAPORAN INTERAKTIF -->
+<!-- MODAL DETAIL & TINJAU LAPORAN INTERAKTIF -->
 <div id="detailModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-fade-in">
         
-        <!-- Modal Header -->
-        <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <!-- Header Modal -->
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
             <div>
                 <span id="modal-id" class="text-[11px] font-mono font-bold text-orange-600 block">#</span>
-                <h3 id="modal-title" class="font-extrabold text-base text-slate-900 leading-tight">Detail Laporan</h3>
+                <h3 id="modal-title" class="font-extrabold text-base text-slate-900 leading-tight">Detail Laporan Bencana</h3>
             </div>
             <button type="button" onclick="closeDetailModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
-        <!-- Modal Body -->
+        <!-- Body Modal -->
         <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto text-xs sm:text-sm">
             <div>
-                <label class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Deskripsi Aduan</label>
+                <label class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Deskripsi Kejadian</label>
                 <p id="modal-desc" class="text-slate-800 leading-relaxed mt-0.5 bg-slate-50 p-3 rounded-xl border border-slate-200/80">-</p>
             </div>
 
@@ -377,7 +389,7 @@
                     <span id="modal-phone" class="text-[11px] text-slate-500 block">-</span>
                 </div>
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lokasi & Wilayah</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Wilayah & Alamat</span>
                     <span id="modal-location" class="font-semibold text-slate-800 block mt-0.5">-</span>
                     <span id="modal-address" class="text-[11px] text-slate-500 block truncate">-</span>
                 </div>
@@ -389,13 +401,14 @@
             </div>
 
             <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
-                <span class="text-slate-400">Koordinat: <span id="modal-coords" class="font-mono text-slate-600">-</span></span>
+                <span class="text-slate-500">Koordinat GPS: <span id="modal-coords" class="font-mono text-slate-800 font-bold">-</span></span>
                 <span id="modal-status-badge" class="font-bold px-2.5 py-0.5 rounded-full text-xs">-</span>
             </div>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+        <!-- Footer Modal -->
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-[11px] text-slate-400">Verifikasi status dapat diubah langsung dari dropdown tabel.</span>
             <button type="button" onclick="closeDetailModal()" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-xs transition">
                 Tutup
             </button>
@@ -404,11 +417,236 @@
     </div>
 </div>
 
+@push('scripts')
+<!-- Leaflet & Chart.js Script Library -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        
+        // ==========================================
+        // 1. INISIALISASI PETA GIS LIVE MAP (LEAFLET)
+        // ==========================================
+        const bogorCenter = [-6.5950, 106.8166]; // Pusat Kabupaten Bogor
+        const map = L.map('liveGisMap').setView(bogorCenter, 11);
+
+        // Tile Layer OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; OpenStreetMap & Pusdalops BPBD Bogor'
+        }).addTo(map);
+
+        // Layer Groups untuk Toggle
+        const disasterLayerGroup = L.layerGroup().addTo(map);
+        const zoneLayerGroup = L.layerGroup().addTo(map);
+        const poskoLayerGroup = L.layerGroup().addTo(map);
+
+        // A. Marker Titik Bencana
+        const disasterPoints = {!! json_encode($mapReports ?? []) !!};
+        disasterPoints.forEach(function (dp) {
+            if (dp.lat && dp.lng) {
+                const marker = L.circleMarker([dp.lat, dp.lng], {
+                    radius: 8,
+                    fillColor: '#ea5921',
+                    color: '#ffffff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.9
+                });
+
+                const popupContent = `
+                    <div class="text-xs">
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-orange-100 text-orange-800">${dp.bencana}</span>
+                        <h4 class="font-bold text-slate-900 text-sm mt-1">${dp.title}</h4>
+                        <p class="text-slate-500 mt-0.5">${dp.kecamatan}, Desa ${dp.kelurahan}</p>
+                        <p class="text-slate-600 mt-1">${dp.address || ''}</p>
+                        <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                            <span class="font-semibold text-slate-700">Status: ${dp.status}</span>
+                            <span class="font-semibold text-red-600">${dp.victims} Korban</span>
+                        </div>
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+                disasterLayerGroup.addLayer(marker);
+            }
+        });
+
+        // B. Poligon / Lingkaran Zonasi Rawan (Merah, Kuning, Hijau)
+        const zones = {!! json_encode($zonasiList ?? []) !!};
+        zones.forEach(function (z) {
+            const circle = L.circle([z.lat, z.lng], {
+                color: z.color,
+                fillColor: z.color,
+                fillOpacity: 0.18,
+                weight: 2,
+                radius: z.radius
+            });
+
+            const zonePopup = `
+                <div class="text-xs">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider" style="background-color: ${z.color}20; color: ${z.color};">
+                        ${z.level} - ${z.type}
+                    </span>
+                    <h4 class="font-bold text-slate-900 text-sm mt-1">${z.name}</h4>
+                    <p class="text-slate-600 mt-1">${z.description}</p>
+                    <p class="text-slate-400 mt-1 text-[11px]">Radius Bahaya: ${z.radius} meter</p>
+                </div>
+            `;
+            circle.bindPopup(zonePopup);
+            zoneLayerGroup.addLayer(circle);
+        });
+
+        // C. Titik Posko Evakuasi & Gudang Logistik
+        const poskos = {!! json_encode($poskoList ?? []) !!};
+        poskos.forEach(function (p) {
+            const poskoMarker = L.circleMarker([p.lat, p.lng], {
+                radius: 7,
+                fillColor: '#2563eb',
+                color: '#ffffff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.95
+            });
+
+            const poskoPopup = `
+                <div class="text-xs">
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-800">POSKO & LOGISTIK</span>
+                    <h4 class="font-bold text-slate-900 text-sm mt-1">${p.name}</h4>
+                    <p class="text-slate-600 mt-0.5">${p.type}</p>
+                    <p class="text-slate-500 mt-1 font-medium">Kapasitas: ${p.capacity}</p>
+                    <p class="text-blue-600 font-bold mt-1">Telp: ${p.phone}</p>
+                </div>
+            `;
+            poskoMarker.bindPopup(poskoPopup);
+            poskoLayerGroup.addLayer(poskoMarker);
+        });
+
+        // Layer Toggles Event Listeners
+        document.getElementById('toggleDisasters').addEventListener('change', function (e) {
+            if (e.target.checked) map.addLayer(disasterLayerGroup);
+            else map.removeLayer(disasterLayerGroup);
+        });
+
+        document.getElementById('toggleZones').addEventListener('change', function (e) {
+            if (e.target.checked) map.addLayer(zoneLayerGroup);
+            else map.removeLayer(zoneLayerGroup);
+        });
+
+        document.getElementById('togglePosko').addEventListener('change', function (e) {
+            if (e.target.checked) map.addLayer(poskoLayerGroup);
+            else map.removeLayer(poskoLayerGroup);
+        });
+
+
+        // ==========================================
+        // 2. GRAFIK TREN KEJADIAN TAHUNAN (SESUAI GAMBAR)
+        // ==========================================
+        const yearlyCtx = document.getElementById('yearlyDisasterChart').getContext('2d');
+        const yearlyLabels = {!! json_encode($yearlyTrend['labels'] ?? []) !!};
+        const yearlyData = {!! json_encode($yearlyTrend['data'] ?? []) !!};
+
+        new Chart(yearlyCtx, {
+            type: 'line',
+            data: {
+                labels: yearlyLabels,
+                datasets: [{
+                    label: 'Kejadian Bencana',
+                    data: yearlyData,
+                    borderColor: '#166534', // Hijau tua tegas sesuai gambar referensi user
+                    borderWidth: 3,
+                    backgroundColor: '#fde047', // Isi kuning pada titik (dot)
+                    pointBackgroundColor: '#fde047',
+                    pointBorderColor: '#166534',
+                    pointBorderWidth: 2,
+                    pointRadius: 5.5,
+                    pointHoverRadius: 7.5,
+                    tension: 0, // Garis lurus antar titik persis seperti di gambar
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        callbacks: {
+                            label: function(c) { return c.parsed.y + ' Kejadian Bencana'; }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#f1f5f9' },
+                        ticks: { color: '#475569', font: { weight: '600' } }
+                    },
+                    y: {
+                        min: 0,
+                        max: 140,
+                        ticks: { stepSize: 20, color: '#475569', font: { weight: '600' } },
+                        grid: { color: '#f1f5f9' }
+                    }
+                }
+            }
+        });
+
+
+        // ==========================================
+        // 3. GRAFIK PERSEBARAN KORBAN & LAPORAN PER WILAYAH
+        // ==========================================
+        const impactCtx = document.getElementById('districtImpactChart').getContext('2d');
+        const districtLabels = {!! json_encode($districtImpact['labels'] ?? []) !!};
+        const districtKorban = {!! json_encode($districtImpact['korban'] ?? []) !!};
+        const districtLaporan = {!! json_encode($districtImpact['laporan'] ?? []) !!};
+
+        new Chart(impactCtx, {
+            type: 'bar',
+            data: {
+                labels: districtLabels,
+                datasets: [
+                    {
+                        label: 'Laporan Bencana',
+                        data: districtLaporan,
+                        backgroundColor: '#ea5921',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Korban Jiwa/Luka',
+                        data: districtKorban,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { boxWidth: 12, font: { size: 11, weight: '600' } }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 2 },
+                        grid: { color: '#f1f5f9' }
+                    }
+                }
+            }
+        });
+
+    });
+
+    // Modal Detail functions
     function openDetailModal(report) {
         document.getElementById('modal-id').innerText = '#' + report.id_laporan;
-        document.getElementById('modal-title').innerText = report.judul || 'Laporan Kejadian';
-        document.getElementById('modal-desc').innerText = report.deskripsi || 'Tidak ada deskripsi rinci.';
+        document.getElementById('modal-title').innerText = report.judul || 'Detail Laporan';
+        document.getElementById('modal-desc').innerText = report.deskripsi || 'Tidak ada deskripsi.';
         document.getElementById('modal-reporter').innerText = report.nama_pelapor || 'Warga';
         document.getElementById('modal-phone').innerText = report.nomor_telepon ? 'Telp: ' + report.nomor_telepon : '-';
         
@@ -416,7 +654,7 @@
         const village = report.kelurahan ? report.kelurahan.nama_kelurahan : '-';
         document.getElementById('modal-location').innerText = 'Kec. ' + district + ', Desa ' + village;
         document.getElementById('modal-address').innerText = report.alamat_detail || '-';
-        document.getElementById('modal-logistics').innerText = report.kebutuhan_logistik || 'Tidak ada catatan logistik khusus.';
+        document.getElementById('modal-logistics').innerText = report.kebutuhan_logistik || 'Tidak ada logistik khusus.';
         document.getElementById('modal-coords').innerText = (report.latitude && report.longitude) ? report.latitude + ', ' + report.longitude : '-';
 
         const badge = document.getElementById('modal-status-badge');
@@ -440,4 +678,5 @@
         modal.classList.remove('flex');
     }
 </script>
+@endpush
 @endsection

@@ -25,6 +25,14 @@ class LaporanBencana extends Model
         'judul',
         'deskripsi',
         'jumlah_korban',
+        'tingkat_korban',
+        'jumlah_korban_jiwa',
+        'jumlah_korban_luka_ringan',
+        'jumlah_korban_luka_sedang',
+        'jumlah_korban_luka_berat',
+        'jumlah_rumah_rusak_berat',
+        'jumlah_rumah_rusak_sedang',
+        'jumlah_rumah_rusak_ringan',
         'latitude',
         'longitude',
         'alamat_detail',
@@ -35,6 +43,13 @@ class LaporanBencana extends Model
 
     protected $casts = [
         'jumlah_korban' => 'integer',
+        'jumlah_korban_jiwa' => 'integer',
+        'jumlah_korban_luka_ringan' => 'integer',
+        'jumlah_korban_luka_sedang' => 'integer',
+        'jumlah_korban_luka_berat' => 'integer',
+        'jumlah_rumah_rusak_berat' => 'integer',
+        'jumlah_rumah_rusak_sedang' => 'integer',
+        'jumlah_rumah_rusak_ringan' => 'integer',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'foto_laporan' => 'array',
@@ -42,7 +57,7 @@ class LaporanBencana extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id_user', 'id_user')->withTrashed();
+        return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
 
     public function bencana(): BelongsTo

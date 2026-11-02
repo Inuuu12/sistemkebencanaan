@@ -91,7 +91,7 @@
             <div class="w-full max-w-sm mx-auto my-auto py-2">
                 
                 <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-slate-900 mb-1">Masuk</h2>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-1">Admin Login</h2>
                     <p class="text-xs sm:text-sm text-slate-500">
                         Masukkan email dan password akun Anda untuk melanjutkan.
                     </p>

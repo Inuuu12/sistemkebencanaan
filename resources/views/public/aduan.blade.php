@@ -51,7 +51,7 @@
     </div>
     @endif
 
-    <form action="{{ route('public.aduan.store') }}" method="POST" enctype="multipart/form-data" class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200/90 dark:border-slate-800 shadow-xl space-y-8">
+    <form id="form-lapor-aduan" action="{{ route('public.aduan.store') }}" method="POST" enctype="multipart/form-data" class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200/90 dark:border-slate-800 shadow-xl space-y-8">
         @csrf
 
         <!-- Bagian 1: Data Identitas Pelapor -->
@@ -60,7 +60,8 @@
                 <span class="w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-950 text-[#ea5921] flex items-center justify-center text-xs font-black">1</span>
                 Data Pelapor
             </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <div>
                     <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                         Nama Lengkap
@@ -76,14 +77,81 @@
                     <input type="tel" name="nomor_telepon" value="{{ old('nomor_telepon') }}" placeholder="Contoh: 081234567890" required
                         class="w-full text-xs font-medium px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:bg-white dark:focus:bg-slate-900 focus:outline-none">
                 </div>
+            </div>
 
-                <div>
-                    <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                        Email (Opsional)
+            <!-- Email Pelapor (Wajib) & OTP Verification -->
+            @php
+                $verifiedEmailSession = session('verified_aduan_email');
+                $isPreVerified = !empty($verifiedEmailSession) && (old('email_pelapor') === $verifiedEmailSession || !old('email_pelapor'));
+                $initialEmail = old('email_pelapor', $verifiedEmailSession ?? '');
+            @endphp
+            <div id="email-otp-container" class="mt-4 p-5 rounded-2xl bg-orange-50/40 dark:bg-slate-800/50 border border-orange-100 dark:border-slate-800 transition-all">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                    <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        Email Pelapor (Wajib) <span class="text-red-500">*</span>
                     </label>
-                    <input type="email" name="email_pelapor" value="{{ old('email_pelapor') }}" placeholder="nama@email.com"
-                        class="w-full text-xs font-medium px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:bg-white dark:focus:bg-slate-900 focus:outline-none">
+                    <div id="email-verification-badge" class="{{ $isPreVerified ? '' : 'hidden' }} inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
+                        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Email Terverifikasi</span>
+                    </div>
                 </div>
+
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <div class="relative flex-1">
+                        <input type="email" id="email_pelapor" name="email_pelapor" value="{{ $initialEmail }}" placeholder="nama@email.com" required
+                            {{ $isPreVerified ? 'readonly' : '' }}
+                            class="w-full text-xs font-medium px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 {{ $isPreVerified ? 'bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 cursor-not-allowed' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white' }} focus:ring-2 focus:ring-[#ea5921] focus:outline-none"
+                            oninput="onEmailInputChanged()">
+                    </div>
+                    <button type="button" id="btn-request-otp" onclick="requestOtp()"
+                        class="{{ $isPreVerified ? 'hidden' : '' }} px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-orange-600 dark:hover:bg-orange-700 text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 shrink-0">
+                        <span id="btn-request-otp-text">Kirim Kode OTP</span>
+                        <svg id="btn-request-otp-spinner" class="hidden animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
+                    Email wajib aktif dan sah. Kode OTP akan dikirimkan untuk memastikan email Anda terdaftar dan bukan email palsu.
+                </p>
+
+                <!-- Box Input OTP (Dibawah Email) -->
+                <div id="otp-section" class="{{ $isPreVerified ? 'hidden' : 'mt-4 pt-4 border-t border-orange-100 dark:border-slate-700/60' }}">
+                    <div id="otp-status-message" class="hidden mb-3 text-xs p-3 rounded-xl"></div>
+
+                    <div id="otp-input-container" class="hidden space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                Masukkan 6 Digit Kode OTP <span class="text-red-500">*</span>
+                            </label>
+                            <span id="otp-countdown-text" class="text-xs text-orange-600 dark:text-orange-400 font-bold"></span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                            <input type="text" id="otp_code" maxlength="6" inputmode="numeric" placeholder="123456"
+                                class="w-full sm:w-48 text-center tracking-[0.3em] font-mono text-base font-extrabold px-4 py-2.5 rounded-xl border border-orange-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none"
+                                onkeyup="if(this.value.length === 6) verifyOtp()">
+                            <button type="button" id="btn-verify-otp" onclick="verifyOtp()"
+                                class="px-6 py-2.5 rounded-xl bg-[#ea5921] hover:bg-[#d94812] text-white text-xs font-black shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-2">
+                                <span id="btn-verify-otp-text">Verifikasi OTP</span>
+                                <svg id="btn-verify-otp-spinner" class="hidden animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Silakan periksa kotak masuk atau spam di email Anda. Kode berlaku 10 menit.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Box Sukses Terverifikasi -->
+                <div id="otp-verified-success-box" class="{{ $isPreVerified ? '' : 'hidden' }} mt-3 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                        <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Email terverifikasi sah (<strong id="verified-email-label">{{ $initialEmail }}</strong>). Anda dapat melanjutkan pengisian laporan.</span>
+                    </div>
+                    <button type="button" onclick="changeEmail()" class="text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white underline shrink-0">
+                        Ganti Email
+                    </button>
+                </div>
+
+                <input type="hidden" id="is_email_verified" value="{{ $isPreVerified ? '1' : '0' }}">
             </div>
         </div>
 
@@ -207,6 +275,78 @@
                     </div>
                 </div>
 
+                {{-- Jumlah Korban & Kerusakan Bangunan --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    {{-- Jumlah Korban --}}
+                    <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                        <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+                            Jumlah Korban (Jiwa)
+                        </label>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+                                <label class="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider w-24 shrink-0">Total Jiwa</label>
+                                <input type="number" name="jumlah_korban_jiwa" value="{{ old('jumlah_korban_jiwa', 0) }}" min="0" placeholder="0"
+                                    class="flex-1 text-xs font-medium px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
+                                <span class="text-[10px] text-slate-500 shrink-0">jiwa</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
+                                <label class="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider w-24 shrink-0">Luka Ringan</label>
+                                <input type="number" name="jumlah_korban_luka_ringan" value="{{ old('jumlah_korban_luka_ringan', 0) }}" min="0" placeholder="0"
+                                    class="flex-1 text-xs font-medium px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
+                                <span class="text-[10px] text-slate-500 shrink-0">jiwa</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-orange-500 shrink-0"></span>
+                                <label class="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider w-24 shrink-0">Luka Sedang</label>
+                                <input type="number" name="jumlah_korban_luka_sedang" value="{{ old('jumlah_korban_luka_sedang', 0) }}" min="0" placeholder="0"
+                                    class="flex-1 text-xs font-medium px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
+                                <span class="text-[10px] text-slate-500 shrink-0">jiwa</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-red-600 shrink-0"></span>
+                                <label class="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider w-24 shrink-0">Luka Berat</label>
+                                <input type="number" name="jumlah_korban_luka_berat" value="{{ old('jumlah_korban_luka_berat', 0) }}" min="0" placeholder="0"
+                                    class="flex-1 text-xs font-medium px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
+                                <span class="text-[10px] text-slate-500 shrink-0">jiwa</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Kerusakan Bangunan --}}
+                    <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                        <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+                            Kerusakan Bangunan (Rumah)
+                        </label>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0"></span>
+                                <label class="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider w-24 shrink-0">Rusak Berat</label>
+                                <input type="number" name="jumlah_rumah_rusak_berat" value="{{ old('jumlah_rumah_rusak_berat', 0) }}" min="0" placeholder="0"
+                                    class="flex-1 text-xs font-medium px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
+                                <span class="text-[10px] text-slate-500 shrink-0">rumah</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                                <label class="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider w-24 shrink-0">Rusak Sedang</label>
+                                <input type="number" name="jumlah_rumah_rusak_sedang" value="{{ old('jumlah_rumah_rusak_sedang', 0) }}" min="0" placeholder="0"
+                                    class="flex-1 text-xs font-medium px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
+                                <span class="text-[10px] text-slate-500 shrink-0">rumah</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                <label class="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider w-24 shrink-0">Rusak Ringan</label>
+                                <input type="number" name="jumlah_rumah_rusak_ringan" value="{{ old('jumlah_rumah_rusak_ringan', 0) }}" min="0" placeholder="0"
+                                    class="flex-1 text-xs font-medium px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
+                                <span class="text-[10px] text-slate-500 shrink-0">rumah</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
                 <div>
                     <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                         Kronologi / Deskripsi Kejadian <span class="text-red-500">*</span>
@@ -301,5 +441,248 @@
             reader.readAsDataURL(file);
         }
     }
+
+    // ==========================================
+    // OTP VERIFIKASI EMAIL PELAPOR
+    // ==========================================
+    let otpCooldownInterval = null;
+
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
+    function showOtpStatus(message, isSuccess = false, isWarning = false) {
+        const el = document.getElementById('otp-status-message');
+        el.className = 'mb-3 text-xs p-3 rounded-xl border leading-relaxed';
+        
+        if (isSuccess) {
+            el.classList.add('bg-emerald-50', 'dark:bg-emerald-950/40', 'text-emerald-800', 'dark:text-emerald-300', 'border-emerald-200', 'dark:border-emerald-800');
+        } else if (isWarning) {
+            el.classList.add('bg-amber-50', 'dark:bg-amber-950/40', 'text-amber-800', 'dark:text-amber-300', 'border-amber-200', 'dark:border-amber-800');
+        } else {
+            el.classList.add('bg-red-50', 'dark:bg-red-950/40', 'text-red-700', 'dark:text-red-300', 'border-red-200', 'dark:border-red-800');
+        }
+        el.innerHTML = message;
+        el.classList.remove('hidden');
+    }
+
+    function hideOtpStatus() {
+        const el = document.getElementById('otp-status-message');
+        el.classList.add('hidden');
+        el.innerHTML = '';
+    }
+
+    function onEmailInputChanged() {
+        const isVerified = document.getElementById('is_email_verified').value === '1';
+        if (isVerified) {
+            document.getElementById('is_email_verified').value = '0';
+            document.getElementById('email-verification-badge').classList.add('hidden');
+            document.getElementById('otp-verified-success-box').classList.add('hidden');
+            document.getElementById('btn-request-otp').classList.remove('hidden');
+            document.getElementById('otp-section').classList.remove('hidden');
+        }
+    }
+
+    function requestOtp() {
+        const emailInput = document.getElementById('email_pelapor');
+        const email = emailInput.value.trim();
+
+        if (!email) {
+            emailInput.focus();
+            showOtpStatus('Harap masukkan alamat email Anda terlebih dahulu.');
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            emailInput.focus();
+            showOtpStatus('Format alamat email tidak valid.');
+            return;
+        }
+
+        const btn = document.getElementById('btn-request-otp');
+        const btnText = document.getElementById('btn-request-otp-text');
+        const btnSpinner = document.getElementById('btn-request-otp-spinner');
+
+        btn.disabled = true;
+        btnText.innerText = 'Mengirim...';
+        btnSpinner.classList.remove('hidden');
+        hideOtpStatus();
+
+        fetch("{{ route('public.aduan.otp.send') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email: email })
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.message || 'Gagal mengirim kode OTP.');
+            }
+            return data;
+        })
+        .then(data => {
+            let msg = data.message;
+            if (data.dev_otp) {
+                msg += `<div class="mt-2 p-2.5 rounded-lg bg-orange-100/70 dark:bg-slate-900 border border-orange-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold">
+                    <span class="text-orange-700 dark:text-orange-400 uppercase text-[10px] tracking-wider block font-extrabold mb-0.5">DEV / LOCAL TEST:</span>
+                    Kode OTP: <span class="font-mono text-base font-black text-[#ea5921] tracking-widest">${data.dev_otp}</span>
+                </div>`;
+            }
+            showOtpStatus(msg, true);
+
+            document.getElementById('otp-section').classList.remove('hidden');
+            document.getElementById('otp-input-container').classList.remove('hidden');
+            const otpCodeInput = document.getElementById('otp_code');
+            otpCodeInput.value = '';
+            otpCodeInput.focus();
+
+            startOtpCountdown(data.cooldown || 60);
+        })
+        .catch(err => {
+            showOtpStatus(err.message || 'Terjadi kesalahan saat mengirim OTP.');
+            btn.disabled = false;
+            btnText.innerText = 'Kirim Kode OTP';
+            btnSpinner.classList.add('hidden');
+        });
+    }
+
+    function startOtpCountdown(seconds) {
+        const btn = document.getElementById('btn-request-otp');
+        const btnText = document.getElementById('btn-request-otp-text');
+        const btnSpinner = document.getElementById('btn-request-otp-spinner');
+        const countdownText = document.getElementById('otp-countdown-text');
+
+        if (otpCooldownInterval) clearInterval(otpCooldownInterval);
+
+        btn.disabled = true;
+        btnSpinner.classList.add('hidden');
+
+        let remaining = seconds;
+        countdownText.innerText = `Kirim ulang (${remaining}s)`;
+        btnText.innerText = `Tunggu (${remaining}s)`;
+
+        otpCooldownInterval = setInterval(() => {
+            remaining--;
+            if (remaining <= 0) {
+                clearInterval(otpCooldownInterval);
+                btn.disabled = false;
+                btnText.innerText = 'Kirim Ulang OTP';
+                countdownText.innerText = '';
+            } else {
+                countdownText.innerText = `Kirim ulang (${remaining}s)`;
+                btnText.innerText = `Tunggu (${remaining}s)`;
+            }
+        }, 1000);
+    }
+
+    function verifyOtp() {
+        const email = document.getElementById('email_pelapor').value.trim();
+        const otpInput = document.getElementById('otp_code');
+        const otp = otpInput.value.trim();
+
+        if (!otp || otp.length !== 6) {
+            showOtpStatus('Masukkan 6 digit angka kode OTP yang diterima.');
+            otpInput.focus();
+            return;
+        }
+
+        const btn = document.getElementById('btn-verify-otp');
+        const btnText = document.getElementById('btn-verify-otp-text');
+        const btnSpinner = document.getElementById('btn-verify-otp-spinner');
+
+        btn.disabled = true;
+        btnText.innerText = 'Memverifikasi...';
+        btnSpinner.classList.remove('hidden');
+        hideOtpStatus();
+
+        fetch("{{ route('public.aduan.otp.verify') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email: email, otp: otp })
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.message || 'Kode OTP tidak valid.');
+            }
+            return data;
+        })
+        .then(data => {
+            document.getElementById('is_email_verified').value = '1';
+
+            // Tampilkan badge terverifikasi dan box sukses
+            document.getElementById('email-verification-badge').classList.remove('hidden');
+            document.getElementById('otp-verified-success-box').classList.remove('hidden');
+            document.getElementById('verified-email-label').innerText = email;
+
+            const emailInput = document.getElementById('email_pelapor');
+            emailInput.readOnly = true;
+            emailInput.classList.remove('bg-white', 'dark:bg-slate-800');
+            emailInput.classList.add('bg-slate-100', 'dark:bg-slate-700/60', 'text-slate-600', 'dark:text-slate-300', 'cursor-not-allowed');
+
+            document.getElementById('btn-request-otp').classList.add('hidden');
+            document.getElementById('otp-section').classList.add('hidden');
+            document.getElementById('otp-input-container').classList.add('hidden');
+
+            if (otpCooldownInterval) clearInterval(otpCooldownInterval);
+        })
+        .catch(err => {
+            showOtpStatus(err.message || 'Gagal memverifikasi OTP.');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btnText.innerText = 'Verifikasi OTP';
+            btnSpinner.classList.add('hidden');
+        });
+    }
+
+    function changeEmail() {
+        document.getElementById('is_email_verified').value = '0';
+        const emailInput = document.getElementById('email_pelapor');
+        emailInput.readOnly = false;
+        emailInput.classList.remove('bg-slate-100', 'dark:bg-slate-700/60', 'text-slate-600', 'dark:text-slate-300', 'cursor-not-allowed');
+        emailInput.classList.add('bg-white', 'dark:bg-slate-800');
+        emailInput.focus();
+
+        document.getElementById('email-verification-badge').classList.add('hidden');
+        document.getElementById('otp-verified-success-box').classList.add('hidden');
+        const reqBtn = document.getElementById('btn-request-otp');
+        reqBtn.classList.remove('hidden');
+        reqBtn.disabled = false;
+        document.getElementById('btn-request-otp-text').innerText = 'Kirim Kode OTP';
+        document.getElementById('otp-section').classList.remove('hidden');
+        document.getElementById('otp-input-container').classList.add('hidden');
+        hideOtpStatus();
+    }
+
+    // Intersep submit form untuk validasi OTP
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('form-lapor-aduan');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const isVerified = document.getElementById('is_email_verified').value === '1';
+                if (!isVerified) {
+                    e.preventDefault();
+                    const container = document.getElementById('email-otp-container');
+                    container.classList.add('ring-4', 'ring-red-400', 'dark:ring-red-800');
+                    setTimeout(() => container.classList.remove('ring-4', 'ring-red-400', 'dark:ring-red-800'), 3500);
+                    
+                    document.getElementById('otp-section').classList.remove('hidden');
+                    showOtpStatus('<strong>Perhatian:</strong> Email pelapor wajib diverifikasi dengan kode OTP sebelum mengirimkan laporan bencana. Silakan klik <strong>Kirim Kode OTP</strong>.', false, true);
+                    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
+    });
 </script>
 @endpush

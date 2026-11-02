@@ -39,6 +39,6 @@ class DampakKerusakan extends Model
 
     public function recorder(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'dicatat_oleh', 'id_user')->withTrashed();
+        return $this->belongsTo(User::class, 'dicatat_oleh', 'id_user');
     }
 }
