@@ -8,26 +8,15 @@
     <!-- 1. HEADER HALAMAN -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
-            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-slate-800 transition-colors">Admin</a>
-                <span>/</span>
-                <span class="text-[#ea5921]">Data Korban</span>
-            </div>
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-                <span>Data Korban & Dampak Bencana</span>
+                <span>Data Korban</span>
             </h1>
-            <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
-                Pencatatan rincian dampak kemanusiaan: korban jiwa, luka-luka, pengungsi, dan orang hilang di Kabupaten Bogor.
-            </p>
         </div>
 
         <div class="flex items-center gap-2.5 self-start sm:self-auto">
             <button type="button" onclick="openCreateModal()" 
                     class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#ea5921] text-white hover:bg-[#d94812] transition shadow-sm shadow-orange-500/20 cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Catat Data Korban</span>
+                <span>Tambah Data Korban</span>
             </button>
         </div>
     </div>
@@ -72,7 +61,6 @@
                 <span class="text-2xl font-black text-slate-900">{{ number_format($totalTitikKejadian) }}</span>
                 <span class="text-xs text-slate-500">Lokasi</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Terekam di sistem</p>
         </div>
 
         <!-- Korban Jiwa (Meninggal) -->
@@ -82,7 +70,6 @@
                 <span class="text-2xl font-black text-rose-600">{{ number_format($totalMeninggal) }}</span>
                 <span class="text-xs text-rose-700 font-semibold">Jiwa</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Korban jiwa terverifikasi</p>
         </div>
 
         <!-- Luka Berat -->
@@ -92,7 +79,6 @@
                 <span class="text-2xl font-black text-amber-700">{{ number_format($totalLukaBerat) }}</span>
                 <span class="text-xs text-amber-800 font-semibold">Jiwa</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Perlu rawat intensif</p>
         </div>
 
         <!-- Luka Ringan -->
@@ -102,7 +88,6 @@
                 <span class="text-2xl font-black text-yellow-700">{{ number_format($totalLukaRingan) }}</span>
                 <span class="text-xs text-yellow-800 font-semibold">Jiwa</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Rawat jalan / P3K</p>
         </div>
 
         <!-- Pengungsi -->
@@ -112,7 +97,6 @@
                 <span class="text-2xl font-black text-blue-600">{{ number_format($totalMengungsi) }}</span>
                 <span class="text-xs text-blue-700 font-semibold">Jiwa</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Di posko & keluarga</p>
         </div>
 
         <!-- Hilang -->
@@ -122,7 +106,6 @@
                 <span class="text-2xl font-black text-purple-600">{{ number_format($totalHilang) }}</span>
                 <span class="text-xs text-purple-700 font-semibold">Jiwa</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Proses pencarian</p>
         </div>
     </div>
 
@@ -179,11 +162,6 @@
                 <button type="submit" title="Terapkan Filter" class="w-full py-2 px-3 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold flex items-center justify-center transition">
                     Filter
                 </button>
-                @if(request()->hasAny(['q', 'kecamatan_id', 'bencana_id', 'kondisi']))
-                    <a href="{{ route('admin.korban.index') }}" title="Reset Filter" class="p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                    </a>
-                @endif
             </div>
 
         </form>
@@ -193,19 +171,19 @@
     <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
         <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <h2 class="font-bold text-sm text-slate-900">Rincian Data Korban Terdata</h2>
-            <span class="text-xs text-slate-500">Menampilkan <strong>{{ $korbanList->total() }}</strong> catatan</span>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
                     <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold text-[11px] uppercase tracking-wider">
-                        <th class="py-3 px-4 w-12 text-center">#</th>
+                        <th class="py-3 px-4 w-12 text-center">No</th>
+                        <th class="py-3 px-4 min-w-[150px]">Nama Bencana</th>
                         <th class="py-3 px-4 min-w-[200px]">Kejadian Bencana</th>
                         <th class="py-3 px-4 min-w-[180px]">Lokasi Wilayah</th>
                         <th class="py-3 px-4 min-w-[240px]">Rincian Jiwa Terdampak</th>
                         <th class="py-3 px-4 min-w-[200px]">Keterangan Kondisi</th>
-                        <th class="py-3 px-4 text-center w-28">Aksi</th>
+                        <th class="py-3 px-4 text-center min-w-[140px]">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -222,19 +200,27 @@
                             #{{ $k->id_korban }}
                         </td>
 
+                        <!-- Nama Bencana -->
+                        <td class="py-3 px-4">
+                            @if($laporan && $laporan->bencana)
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-orange-100 text-orange-800">
+                                    {{ $laporan->bencana->nama_bencana }}
+                                </span>
+                            @else
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium text-slate-400 bg-slate-100 italic">
+                                    Non-Kait Laporan
+                                </span>
+                            @endif
+                        </td>
+
                         <!-- Kejadian Bencana -->
                         <td class="py-3 px-4">
                             @if($laporan)
                                 <div class="font-bold text-slate-900 hover:text-[#ea5921] transition-colors leading-snug">
                                     {{ $laporan->judul }}
                                 </div>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-orange-100 text-orange-800">
-                                        {{ $laporan->bencana->nama_bencana ?? 'Bencana' }}
-                                    </span>
-                                    <span class="text-[11px] text-slate-500">
-                                        {{ $laporan->tanggal_kejadian ? \Carbon\Carbon::parse($laporan->tanggal_kejadian)->translatedFormat('d M Y') : $laporan->created_at->format('d/m/Y') }}
-                                    </span>
+                                <div class="text-[11px] text-slate-500 mt-1">
+                                    {{ $laporan->tanggal_kejadian ? \Carbon\Carbon::parse($laporan->tanggal_kejadian)->translatedFormat('d M Y') : $laporan->created_at->format('d/m/Y') }}
                                 </div>
                             @else
                                 <span class="font-medium text-slate-700 italic">Pencatatan Mandiri Wilayah</span>
@@ -308,14 +294,14 @@
                                     {{ $k->keterangan }}
                                 </p>
                             @else
-                                <span class="text-xs text-slate-400 italic">- Tidak ada catatan -</span>
+                                <span class="text-xs text-slate-400 italic"> Tidak ada catatan </span>
                             @endif
                         </td>
 
                         <!-- Aksi -->
                         <td class="py-3 px-4 text-center">
-                            <div class="inline-flex items-center gap-1 justify-center">
-                                <!-- Tombol Edit -->
+                            <div class="inline-flex items-center gap-1.5 justify-center">
+                                <!-- Tombol Ubah (Biru) -->
                                 <button type="button" 
                                         onclick="openEditModal({{ json_encode([
                                             'id_korban' => $k->id_korban,
@@ -329,28 +315,24 @@
                                             'jumlah_hilang' => $k->jumlah_hilang,
                                             'keterangan' => $k->keterangan,
                                         ]) }})"
-                                        title="Edit Data" 
-                                        class="p-1.5 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                    </svg>
+                                        title="Ubah Data" 
+                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition shadow-xs cursor-pointer">
+                                    <span>Ubah</span>
                                 </button>
 
-                                <!-- Tombol Hapus -->
+                                <!-- Tombol Hapus (Merah) -->
                                 <button type="button" 
                                         onclick="confirmDelete({{ $k->id_korban }})"
                                         title="Hapus Data" 
-                                        class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
+                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-600 hover:bg-red-700 active:bg-red-800 transition shadow-xs cursor-pointer">
+                                    <span>Hapus</span>
                                 </button>
                             </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="py-12 text-center text-slate-500">
+                        <td colspan="7" class="py-12 text-center text-slate-500">
                             <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
@@ -378,7 +360,6 @@
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
                 <h3 class="text-base font-bold text-slate-900">Catat Rincian Korban Bencana</h3>
-                <p class="text-xs text-slate-500">Tambahkan jumlah jiwa terdampak dan catatan penanganan medis/pengungsian.</p>
             </div>
             <button type="button" onclick="closeCreateModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>

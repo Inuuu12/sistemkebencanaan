@@ -1,55 +1,87 @@
 <?php
 
-use App\Http\Controllers\PublicPortalController;
+use App\Http\Controllers\Admin\BencanaController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\KerusakanController;
+use App\Http\Controllers\Admin\KorbanController;
+use App\Http\Controllers\Admin\LaporanController;
+use App\Http\Controllers\Admin\LogistikController;
+use App\Http\Controllers\Admin\PengungsianController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Public\AduanController;
+use App\Http\Controllers\Public\ApiController;
+use App\Http\Controllers\Public\BeritaController;
+use App\Http\Controllers\Public\HomeController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes - Sistem Informasi Kebencanaan Kabupaten Bogor (AKSARA BOGOR)
 |--------------------------------------------------------------------------
-| Portal Publik Kebencanaan Kabupaten Bogor
+| Portal Publik Kebencanaan Kabupaten Bogor & Panel Administrasi
 */
 
-Route::get('/', [PublicPortalController::class, 'index'])->name('public.home');
-Route::get('/berita', [PublicPortalController::class, 'news'])->name('public.news');
-Route::get('/berita/{id}', [PublicPortalController::class, 'newsDetail'])->name('public.news.detail');
-Route::get('/lapor', [PublicPortalController::class, 'aduan'])->name('public.aduan');
-Route::post('/lapor', [PublicPortalController::class, 'storeAduan'])->name('public.aduan.store');
-Route::post('/lapor/otp/send', [PublicPortalController::class, 'sendAduanOtp'])->name('public.aduan.otp.send');
-Route::post('/lapor/otp/verify', [PublicPortalController::class, 'verifyAduanOtp'])->name('public.aduan.otp.verify');
+// Public Portal Routes
+Route::get('/', [HomeController::class, 'index'])->name('public.home');
+Route::get('/berita', [BeritaController::class, 'news'])->name('public.news');
+Route::get('/berita/{id}', [BeritaController::class, 'newsDetail'])->name('public.news.detail');
+Route::get('/lapor', [AduanController::class, 'aduan'])->name('public.aduan');
+Route::post('/lapor', [AduanController::class, 'storeAduan'])->name('public.aduan.store');
+Route::post('/lapor/otp/send', [AduanController::class, 'sendAduanOtp'])->name('public.aduan.otp.send');
+Route::post('/lapor/otp/verify', [AduanController::class, 'verifyAduanOtp'])->name('public.aduan.otp.verify');
 
 // Internal Data Helper API routes
-Route::get('/api/kelurahan', [PublicPortalController::class, 'getKelurahan'])->name('public.api.kelurahan');
-Route::get('/api/boundaries', [PublicPortalController::class, 'getBoundaries'])->name('public.api.boundaries');
+Route::get('/api/kelurahan', [ApiController::class, 'getKelurahan'])->name('public.api.kelurahan');
+Route::get('/api/boundaries', [ApiController::class, 'getBoundaries'])->name('public.api.boundaries');
 
 // Auth Routes
-Route::get('/login', [PublicPortalController::class, 'login'])->name('public.login');
-Route::post('/login', [PublicPortalController::class, 'authenticate'])->name('public.login.store');
-Route::post('/logout', [PublicPortalController::class, 'logout'])->name('public.logout');
+Route::get('/login', [AuthController::class, 'login'])->name('public.login');
+Route::post('/login', [AuthController::class, 'authenticate'])->name('public.login.store');
+Route::post('/logout', [AuthController::class, 'logout'])->name('public.logout');
 
-// Admin Routes (Panel Admin Sederhana & Ringkas)
+// Admin Routes (Panel Admin)
 Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
-    Route::get('/dashboard', [\App\Http\Controllers\AdminController::class, 'dashboard']);
-    Route::get('/laporan/validasi', [\App\Http\Controllers\AdminController::class, 'validasiAduan'])->name('laporan.validasi');
-    Route::post('/laporan/{id}/status', [\App\Http\Controllers\AdminController::class, 'updateStatus'])->name('laporan.status');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    // Validasi & Status Laporan
+    Route::get('/laporan/validasi', [LaporanController::class, 'validasiAduan'])->name('laporan.validasi');
+    Route::post('/laporan/{id}/status', [LaporanController::class, 'updateStatus'])->name('laporan.status');
+    Route::delete('/laporan/{id}', [LaporanController::class, 'destroy'])->name('laporan.destroy');
 
     // Manajemen Data Korban
-    Route::get('/korban', [\App\Http\Controllers\AdminController::class, 'dataKorban'])->name('korban.index');
-    Route::post('/korban', [\App\Http\Controllers\AdminController::class, 'storeKorban'])->name('korban.store');
-    Route::put('/korban/{id}', [\App\Http\Controllers\AdminController::class, 'updateKorban'])->name('korban.update');
-    Route::delete('/korban/{id}', [\App\Http\Controllers\AdminController::class, 'destroyKorban'])->name('korban.destroy');
+    Route::get('/korban', [KorbanController::class, 'dataKorban'])->name('korban.index');
+    Route::post('/korban', [KorbanController::class, 'storeKorban'])->name('korban.store');
+    Route::put('/korban/{id}', [KorbanController::class, 'updateKorban'])->name('korban.update');
+    Route::delete('/korban/{id}', [KorbanController::class, 'destroyKorban'])->name('korban.destroy');
 
     // Manajemen Data Pengungsian
-    Route::get('/pengungsian', [\App\Http\Controllers\AdminController::class, 'dataPengungsian'])->name('pengungsian.index');
-    Route::post('/pengungsian', [\App\Http\Controllers\AdminController::class, 'storePengungsian'])->name('pengungsian.store');
-    Route::put('/pengungsian/{id}', [\App\Http\Controllers\AdminController::class, 'updatePengungsian'])->name('pengungsian.update');
-    Route::delete('/pengungsian/{id}', [\App\Http\Controllers\AdminController::class, 'destroyPengungsian'])->name('pengungsian.destroy');
+    Route::get('/pengungsian', [PengungsianController::class, 'dataPengungsian'])->name('pengungsian.index');
+    Route::post('/pengungsian', [PengungsianController::class, 'storePengungsian'])->name('pengungsian.store');
+    Route::put('/pengungsian/{id}', [PengungsianController::class, 'updatePengungsian'])->name('pengungsian.update');
+    Route::delete('/pengungsian/{id}', [PengungsianController::class, 'destroyPengungsian'])->name('pengungsian.destroy');
 
     // Manajemen Data Kerusakan
-    Route::get('/kerusakan', [\App\Http\Controllers\AdminController::class, 'dataKerusakan'])->name('kerusakan.index');
-    Route::post('/kerusakan', [\App\Http\Controllers\AdminController::class, 'storeKerusakan'])->name('kerusakan.store');
-    Route::put('/kerusakan/{id}', [\App\Http\Controllers\AdminController::class, 'updateKerusakan'])->name('kerusakan.update');
-    Route::delete('/kerusakan/{id}', [\App\Http\Controllers\AdminController::class, 'destroyKerusakan'])->name('kerusakan.destroy');
-});
+    Route::get('/kerusakan', [KerusakanController::class, 'dataKerusakan'])->name('kerusakan.index');
+    Route::post('/kerusakan', [KerusakanController::class, 'storeKerusakan'])->name('kerusakan.store');
+    Route::put('/kerusakan/{id}', [KerusakanController::class, 'updateKerusakan'])->name('kerusakan.update');
+    Route::delete('/kerusakan/{id}', [KerusakanController::class, 'destroyKerusakan'])->name('kerusakan.destroy');
 
+    // Manajemen Logistik & Bantuan: Gudang & Stok Bantuan
+    Route::get('/logistik/stok', [LogistikController::class, 'stokBantuan'])->name('logistik.stok');
+    Route::post('/logistik/stok', [LogistikController::class, 'storeStokBantuan'])->name('logistik.stok.store');
+    Route::put('/logistik/stok/{id}', [LogistikController::class, 'updateStokBantuan'])->name('logistik.stok.update');
+    Route::delete('/logistik/stok/{id}', [LogistikController::class, 'destroyStokBantuan'])->name('logistik.stok.destroy');
+
+    // Manajemen Logistik & Bantuan: Distribusi Bantuan
+    Route::get('/logistik/distribusi', [LogistikController::class, 'distribusiBantuan'])->name('logistik.distribusi');
+    Route::post('/logistik/distribusi', [LogistikController::class, 'storeDistribusiBantuan'])->name('logistik.distribusi.store');
+    Route::put('/logistik/distribusi/{id}', [LogistikController::class, 'updateDistribusiBantuan'])->name('logistik.distribusi.update');
+    Route::delete('/logistik/distribusi/{id}', [LogistikController::class, 'destroyDistribusiBantuan'])->name('logistik.distribusi.destroy');
+
+    // Manajemen Master Data Jenis Bencana
+    Route::get('/bencana', [BencanaController::class, 'dataBencana'])->name('bencana.index');
+    Route::post('/bencana', [BencanaController::class, 'storeBencana'])->name('bencana.store');
+    Route::put('/bencana/{id}', [BencanaController::class, 'updateBencana'])->name('bencana.update');
+    Route::delete('/bencana/{id}', [BencanaController::class, 'destroyBencana'])->name('bencana.destroy');
+});

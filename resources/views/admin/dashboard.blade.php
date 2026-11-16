@@ -161,6 +161,33 @@
                 Sumber: Rekapitulasi Data PUSDALOPS-PB BPBD Kabupaten Bogor
             </div>
         </div>
+
+        <!-- Grafik 2: Proporsi Kejadian Berdasarkan Jenis Bencana (Doughnut Chart) -->
+        <div class="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <div>
+                <!-- Header Grafik -->
+                <div class="text-center mb-4">
+                    <h3 class="font-black text-sm sm:text-base text-slate-800 uppercase tracking-wide">
+                        Proporsi Kejadian Berdasarkan Jenis Bencana
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Distribusi jenis kejadian bencana di Kabupaten Bogor</p>
+
+                    <!-- Custom Total Badge -->
+                    <div class="inline-flex items-center gap-2 mt-3 px-3 py-1 rounded-md border border-slate-200 bg-slate-50/70">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#ea5921]"></span>
+                        <span class="text-xs font-bold text-slate-700">Total: {{ $disasterShare['total'] ?? 0 }} Kejadian</span>
+                    </div>
+                </div>
+
+                <!-- Canvas Chart -->
+                <div class="relative w-full h-64 sm:h-72 flex items-center justify-center">
+                    <canvas id="disasterShareChart"></canvas>
+                </div>
+            </div>
+            <div class="pt-3 border-t border-slate-100 text-[11px] text-slate-400 text-center">
+                Sumber: Klasifikasi Insiden Terverifikasi PUSDALOPS BPBD
+            </div>
+        </div>
     </div>
 
     <!-- 5. STATUS STOK LOGISTIK KRITIS -->
@@ -168,12 +195,11 @@
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-5">
             <div>
                 <h3 class="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                    Status Stok Bantuan Logistik Kritis
+                    Status Stok Bantuan Logistik BPBD Kabupaten Bogor
                 </h3>
-                <p class="text-xs text-slate-500 mt-0.5">Monitoring ketersediaan 4 kategori bantuan darurat utama di Gudang BPBD</p>
             </div>
             <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">
-                Gudang Induk Cibinong
+                Gudang BPBD
             </span>
         </div>
 
@@ -182,32 +208,21 @@
             <div class="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-bold text-slate-800">{{ $item['category'] }}</span>
-                    @if($item['status'] === 'KRITIS')
-                    <span class="px-2 py-0.5 text-[10px] font-black rounded-full bg-red-100 text-red-700 animate-pulse">
+                    <span class="px-2 py-0.5 text-[10px] rounded-full {{ $item['badge_class'] }}">
                         {{ $item['status'] }}
                     </span>
-                    @elseif($item['status'] === 'Waspada')
-                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800">
-                        {{ $item['status'] }}
-                    </span>
-                    @else
-                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">
-                        {{ $item['status'] }}
-                    </span>
-                    @endif
                 </div>
 
                 <div class="flex items-baseline justify-between mb-1.5">
-                    <span class="text-xl font-extrabold text-slate-900">{{ number_format($item['stock']) }} <span class="text-xs font-medium text-slate-500">{{ $item['unit'] }}</span></span>
+                    <span class="text-xl font-extrabold text-slate-900">
+                        {{ number_format($item['stock']) }} <span class="text-xs font-medium text-slate-500">{{ $item['unit'] }}</span>
+                    </span>
                     <span class="text-xs font-bold text-slate-500">{{ $item['percent'] }}%</span>
                 </div>
 
                 <!-- Progress Bar Stok -->
                 <div class="w-full h-2 rounded-full bg-slate-200 overflow-hidden mb-2">
-                    @php
-                        $barColor = $item['status'] === 'KRITIS' ? 'bg-red-500' : ($item['status'] === 'Waspada' ? 'bg-amber-500' : 'bg-emerald-500');
-                    @endphp
-                    <div class="h-full rounded-full {{ $barColor }}" style="width: {{ $item['percent'] }}%"></div>
+                    <div class="h-full rounded-full {{ $item['bar_color'] }}" style="width: {{ $item['percent'] }}%"></div>
                 </div>
 
                 <p class="text-[11px] text-slate-500 truncate" title="{{ $item['items'] }}">
@@ -226,7 +241,6 @@
                 <h3 class="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     Aduan Warga Masuk Terbaru 
                 </h3>
-                <p class="text-xs text-slate-500 mt-0.5">Daftar laporan darurat yang memerlukan respon cepat, validasi, dan penanganan Tim Reaksi Cepat (TRC)</p>
             </div>
             <a href="{{ route('admin.dashboard', ['status' => 'Pending']) }}" 
                 class="text-xs font-bold text-orange-600 hover:text-orange-700 inline-flex items-center gap-1">
@@ -247,7 +261,7 @@
                         <th class="py-3 px-4 text-center">Tindakan Cepat</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-700">
+                <tbody class=w"divide-y divide-slate-100 text-slate-700">
                     @forelse($recentReports as $r)
                     <tr class="hover:bg-slate-50/80 transition-colors">
                         
@@ -309,17 +323,14 @@
                         <td class="py-3 px-4 text-center whitespace-nowrap">
                             @if($r->status === 'Pending')
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
                                     Pending
                                 </span>
                             @elseif($r->status === 'Handling')
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                                     Handling
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                     Selesai
                                 </span>
                             @endif
@@ -341,6 +352,14 @@
                                         <option value="Selesai" {{ $r->status == 'Selesai' ? 'selected' : '' }}>Selesai</option>
                                     </select>
                                 </form>
+                                <button type="button" 
+                                    onclick="confirmDeleteReport({{ $r->id_laporan }}, '{{ addslashes($r->judul) }}')" 
+                                    title="Hapus Aduan Warga" 
+                                    class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
                             </div>
                         </td>
 
@@ -408,7 +427,13 @@
 
         <!-- Footer Modal -->
         <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-[11px] text-slate-400">Verifikasi status dapat diubah langsung dari dropdown tabel.</span>
+            <button type="button" id="modal-btn-delete"
+                    class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition flex items-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                <span>Hapus Aduan</span>
+            </button>
             <button type="button" onclick="closeDetailModal()" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-xs transition">
                 Tutup
             </button>
@@ -594,51 +619,110 @@
 
 
         // ==========================================
-        // 3. GRAFIK PERSEBARAN KORBAN & LAPORAN PER WILAYAH
+        // 2. GRAFIK PROPORSI JENIS BENCANA (DOUGHNUT)
         // ==========================================
-        const impactCtx = document.getElementById('districtImpactChart').getContext('2d');
-        const districtLabels = {!! json_encode($districtImpact['labels'] ?? []) !!};
-        const districtKorban = {!! json_encode($districtImpact['korban'] ?? []) !!};
-        const districtLaporan = {!! json_encode($districtImpact['laporan'] ?? []) !!};
+        const shareCanvas = document.getElementById('disasterShareChart');
+        if (shareCanvas) {
+            const shareCtx = shareCanvas.getContext('2d');
+            const shareLabels = {!! json_encode($disasterShare['labels'] ?? []) !!};
+            const shareData = {!! json_encode($disasterShare['data'] ?? []) !!};
+            const shareColors = {!! json_encode($disasterShare['colors'] ?? []) !!};
 
-        new Chart(impactCtx, {
-            type: 'bar',
-            data: {
-                labels: districtLabels,
-                datasets: [
-                    {
-                        label: 'Laporan Bencana',
-                        data: districtLaporan,
-                        backgroundColor: '#ea5921',
-                        borderRadius: 6
-                    },
-                    {
-                        label: 'Korban Jiwa/Luka',
-                        data: districtKorban,
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 6
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: { boxWidth: 12, font: { size: 11, weight: '600' } }
-                    }
+            new Chart(shareCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: shareLabels,
+                    datasets: [{
+                        data: shareData,
+                        backgroundColor: shareColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6
+                    }]
                 },
-                scales: {
-                    x: { grid: { display: false } },
-                    y: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 2 },
-                        grid: { color: '#f1f5f9' }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '62%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                boxHeight: 12,
+                                padding: 10,
+                                font: {
+                                    family: "'Plus Jakarta Sans', sans-serif",
+                                    size: 11,
+                                    weight: '600'
+                                },
+                                color: '#475569'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return ` ${context.label}: ${value} kejadian (${percentage}%)`;
+                                }
+                            }
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+
+        // ==========================================
+        // 3. GRAFIK PERSEBARAN KORBAN & LAPORAN PER WILAYAH (OPSIONAL)
+        // ==========================================
+        const impactCanvas = document.getElementById('districtImpactChart');
+        if (impactCanvas) {
+            const impactCtx = impactCanvas.getContext('2d');
+            const districtLabels = {!! json_encode($districtImpact['labels'] ?? []) !!};
+            const districtKorban = {!! json_encode($districtImpact['korban'] ?? []) !!};
+            const districtLaporan = {!! json_encode($districtImpact['laporan'] ?? []) !!};
+
+            new Chart(impactCtx, {
+                type: 'bar',
+                data: {
+                    labels: districtLabels,
+                    datasets: [
+                        {
+                            label: 'Laporan Bencana',
+                            data: districtLaporan,
+                            backgroundColor: '#ea5921',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Korban Jiwa/Luka',
+                            data: districtKorban,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { boxWidth: 12, font: { size: 11, weight: '600' } }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 2 },
+                            grid: { color: '#f1f5f9' }
+                        }
+                    }
+                }
+            });
+        }
 
     });
 
@@ -670,6 +754,14 @@
         const modal = document.getElementById('detailModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+
+        const btnDelete = document.getElementById('modal-btn-delete');
+        if (btnDelete) {
+            btnDelete.onclick = function () {
+                closeDetailModal();
+                confirmDeleteReport(report.id_laporan, report.judul || 'Aduan Warga');
+            };
+        }
     }
 
     function closeDetailModal() {
@@ -677,6 +769,22 @@
         modal.classList.add('hidden');
         modal.classList.remove('flex');
     }
+
+    // Hapus Laporan Aduan Warga
+    function confirmDeleteReport(id, title) {
+        const formattedId = '#ADU-' + String(id).padStart(5, '0');
+        if (confirm(`Apakah Anda yakin ingin menghapus data aduan ${formattedId} ("${title}") secara permanen?\n\nPerhatian: Data laporan beserta lampiran foto dan riwayat penanganan akan terhapus dan tidak dapat dipulihkan.`)) {
+            const form = document.getElementById('delete_report_form');
+            form.action = `/admin/laporan/${id}`;
+            form.submit();
+        }
+    }
 </script>
+
+<!-- Form Delete Tersembunyi -->
+<form id="delete_report_form" method="POST" action="" class="hidden">
+    @csrf
+    @method('DELETE')
+</form>
 @endpush
 @endsection

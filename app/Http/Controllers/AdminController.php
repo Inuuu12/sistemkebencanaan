@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Bencana;
 use App\Models\DaerahRawan;
 use App\Models\DampakKerusakan;
+use App\Models\DistribusiBantuan;
+use App\Models\KategoriStok;
 use App\Models\Kecamatan;
 use App\Models\Kelurahan;
 use App\Models\Korban;
 use App\Models\LaporanBencana;
 use App\Models\PoskoPengungsian;
+use App\Models\StokBantuan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -170,49 +173,119 @@ class AdminController extends Controller
             'laporan' => [6, 3, 2, 1, 1, 0],
         ];
 
-        // C. Status Stok Logistik Kritis (Pangan, Sandang, Papan/Hunian, Kesehatan)
-        $logisticsStock = [
-            [
-                'category' => 'Bahan Pangan',
-                'items' => 'Beras, Mi Instan, Air Mineral, Makanan Bayi',
-                'stock' => 1420,
-                'capacity' => 2000,
-                'percent' => 71,
-                'unit' => 'Paket',
-                'status' => 'Aman',
-                'color' => 'emerald',
-            ],
-            [
-                'category' => 'Sandang & Pakaian',
-                'items' => 'Selimut, Pakaian Layak, Handuk, Pakaian Anak',
-                'stock' => 520,
-                'capacity' => 1200,
-                'percent' => 43,
-                'unit' => 'Set',
-                'status' => 'Waspada',
-                'color' => 'amber',
-            ],
-            [
-                'category' => 'Perlengkapan Hunian (Papan)',
-                'items' => 'Tenda Pengungsi, Terpal, Kasur Lipat, Matras',
-                'stock' => 85,
-                'capacity' => 350,
-                'percent' => 24,
-                'unit' => 'Unit',
-                'status' => 'KRITIS',
-                'color' => 'red',
-            ],
-            [
-                'category' => 'Kesehatan & Obat',
-                'items' => 'Kotak P3K, Obat Alergi, Masker, Antiseptik',
-                'stock' => 640,
-                'capacity' => 1000,
-                'percent' => 64,
-                'unit' => 'Pcs',
-                'status' => 'Cukup',
-                'color' => 'blue',
-            ],
-        ];
+        // C. Proporsi Kejadian Berdasarkan Jenis Bencana (Doughnut Chart)
+        $bencanaDistribution = Bencana::withCount('laporanBencana')
+            ->orderByDesc('laporan_bencana_count')
+            ->get()
+            ->filter(function ($b) {
+                return $b->laporan_bencana_count > 0;
+            });
+
+        if ($bencanaDistribution->isEmpty()) {
+            $disasterShare = [
+                'labels' => ['Banjir', 'Tanah Longsor', 'Angin Puting Beliung', 'Kebakaran Lahan', 'Kekeringan'],
+                'data' => [42, 28, 16, 9, 5],
+                'colors' => ['#0284c7', '#d97706', '#059669', '#dc2626', '#8b5cf6'],
+                'total' => 100,
+            ];
+        } else {
+            $palette = ['#0284c7', '#d97706', '#059669', '#dc2626', '#8b5cf6', '#e11d48', '#ea580c', '#0891b2', '#4f46e5'];
+            $labels = [];
+            $data = [];
+            $colors = [];
+            $idx = 0;
+            $sum = 0;
+            foreach ($bencanaDistribution as $item) {
+                $labels[] = $item->nama_bencana;
+                $data[] = (int) $item->laporan_bencana_count;
+                $colors[] = $palette[$idx % count($palette)];
+                $sum += (int) $item->laporan_bencana_count;
+                $idx++;
+            }
+            $disasterShare = [
+                'labels' => $labels,
+                'data' => $data,
+                'colors' => $colors,
+                'total' => $sum,
+            ];
+        }
+
+        // D. Status Stok Logistik (Terhubung ke Model Database KategoriStok & StokBantuan)
+        if (KategoriStok::count() === 0) {
+            $defaultKategori = [
+                ['nama_kategori' => 'Bahan Pangan', 'satuan' => 'Paket', 'deskripsi' => 'Beras, mi instan, air mineral, makanan bayi'],
+                ['nama_kategori' => 'Sandang & Pakaian', 'satuan' => 'Set', 'deskripsi' => 'Selimut, pakaian layak, handuk, pakaian anak'],
+                ['nama_kategori' => 'Perlengkapan Hunian (Papan)', 'satuan' => 'Unit', 'deskripsi' => 'Tenda pengungsi, terpal, kasur lipat, matras'],
+                ['nama_kategori' => 'Kesehatan & Obat', 'satuan' => 'Pcs', 'deskripsi' => 'Kotak P3K, obat alergi, masker, antiseptik'],
+            ];
+            foreach ($defaultKategori as $cat) {
+                KategoriStok::create($cat);
+            }
+        }
+
+        $categories = KategoriStok::with('stokBantuan')->take(4)->get();
+
+        $logisticsStock = $categories->map(function ($cat) {
+            $masuk = $cat->stokBantuan->where('tipe', 'MASUK')->sum('jumlah');
+            $keluar = $cat->stokBantuan->where('tipe', 'KELUAR')->sum('jumlah');
+            $saldo = max(0, $masuk - $keluar);
+
+            $targetKapasitas = match ($cat->nama_kategori) {
+                'Bahan Pangan' => 2000,
+                'Sandang & Pakaian' => 1200,
+                'Perlengkapan Hunian (Papan)' => 350,
+                'Kesehatan & Obat' => 1000,
+                default => 1000,
+            };
+
+            // Jika belum ada pencatatan di database, gunakan baseline awal operasional
+            if ($cat->stokBantuan->isEmpty()) {
+                $saldo = match ($cat->nama_kategori) {
+                    'Bahan Pangan' => 1420,
+                    'Sandang & Pakaian' => 520,
+                    'Perlengkapan Hunian (Papan)' => 85,
+                    'Kesehatan & Obat' => 640,
+                    default => 500,
+                };
+            }
+
+            $percent = min(100, (int) round(($saldo / $targetKapasitas) * 100));
+
+            if ($percent <= 25) {
+                $status = 'KRITIS';
+                $badgeClass = 'bg-red-100 text-red-700 font-black animate-pulse';
+                $barColor = 'bg-red-500';
+            } elseif ($percent <= 50) {
+                $status = 'Waspada';
+                $badgeClass = 'bg-amber-100 text-amber-800 font-bold';
+                $barColor = 'bg-amber-500';
+            } elseif ($percent <= 70) {
+                $status = 'Cukup';
+                $badgeClass = 'bg-blue-100 text-blue-800 font-bold';
+                $barColor = 'bg-blue-500';
+            } else {
+                $status = 'Aman';
+                $badgeClass = 'bg-emerald-100 text-emerald-800 font-bold';
+                $barColor = 'bg-emerald-500';
+            }
+
+            $itemNames = $cat->stokBantuan->pluck('nama_item')->unique()->take(4)->implode(', ');
+            if (empty($itemNames)) {
+                $itemNames = $cat->deskripsi ?: 'Logistik darurat bencana';
+            }
+
+            return [
+                'category' => $cat->nama_kategori,
+                'items' => $itemNames,
+                'stock' => $saldo,
+                'capacity' => $targetKapasitas,
+                'percent' => $percent,
+                'unit' => $cat->satuan ?: 'Unit',
+                'status' => $status,
+                'badge_class' => $badgeClass,
+                'bar_color' => $barColor,
+            ];
+        })->toArray();
 
         // 4. Laporan Terbaru Masuk (Feeds 8 Aduan Terkini)
         $recentReports = LaporanBencana::with(['bencana', 'kecamatan', 'kelurahan'])
@@ -239,6 +312,7 @@ class AdminController extends Controller
             'poskoList',
             'yearlyTrend',
             'districtImpact',
+            'disasterShare',
             'logisticsStock',
             'recentReports'
         ));
@@ -792,5 +866,392 @@ class AdminController extends Controller
 
         return redirect()->route('admin.pengungsian.index')
             ->with('success', 'Data posko pengungsian berhasil dihapus.');
+    }
+
+    /**
+     * Manajemen Gudang & Stok Bantuan Logistik
+     */
+    public function stokBantuan(Request $request)
+    {
+        // Pastikan ada kategori dasar jika tabel kategori masih kosong
+        if (KategoriStok::count() === 0) {
+            $defaultKategori = [
+                ['nama_kategori' => 'Makanan & Sembako', 'satuan' => 'Dus', 'deskripsi' => 'Beras, mie instan, makanan kaleng, biskuit, air mineral'],
+                ['nama_kategori' => 'Kesehatan & Obat', 'satuan' => 'Box', 'deskripsi' => 'P3K, masker, perban, minyak angin, obat-obatan darurat'],
+                ['nama_kategori' => 'Sandang & Selimut', 'satuan' => 'Lembar', 'deskripsi' => 'Selimut tebal, pakaian layak, sarung, pakaian dalam'],
+                ['nama_kategori' => 'Perlengkapan Bayi', 'satuan' => 'Paket', 'deskripsi' => 'Popok bayi, susu formula, bubur bayi, minyak telon'],
+                ['nama_kategori' => 'Tenda & Matras', 'satuan' => 'Unit', 'deskripsi' => 'Tenda pleton, tenda keluarga, velbed, matras tidur'],
+                ['nama_kategori' => 'Kebersihan & Sanitasi', 'satuan' => 'Paket', 'deskripsi' => 'Sabun, pasta gigi, pembersih lantai, detergen, ember'],
+            ];
+            foreach ($defaultKategori as $cat) {
+                KategoriStok::create($cat);
+            }
+        }
+
+        $query = StokBantuan::with(['kategoriStok', 'recorder'])
+            ->latest('tanggal');
+
+        // Pencarian teks
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function ($sub) use ($q) {
+                $sub->where('nama_item', 'like', "%{$q}%")
+                    ->orWhere('sumber', 'like', "%{$q}%")
+                    ->orWhere('tujuan', 'like', "%{$q}%")
+                    ->orWhere('keterangan', 'like', "%{$q}%");
+            });
+        }
+
+        // Filter Kategori
+        if ($request->filled('kategori_id')) {
+            $query->where('id_kategori', $request->kategori_id);
+        }
+
+        // Filter Tipe (MASUK / KELUAR)
+        if ($request->filled('tipe')) {
+            $query->where('tipe', $request->tipe);
+        }
+
+        $stokList = $query->paginate(10)->withQueryString();
+
+        // Metrik Statistik
+        $totalItem = StokBantuan::count();
+        $totalMasuk = StokBantuan::where('tipe', 'MASUK')->sum('jumlah');
+        $totalKeluar = StokBantuan::where('tipe', 'KELUAR')->sum('jumlah');
+        $totalKategori = KategoriStok::count();
+        $totalTersalur = DistribusiBantuan::sum('jumlah');
+
+        $kategoriList = KategoriStok::orderBy('nama_kategori')->get();
+
+        return view('admin.logistik.stok', compact(
+            'stokList',
+            'totalItem',
+            'totalMasuk',
+            'totalKeluar',
+            'totalKategori',
+            'totalTersalur',
+            'kategoriList'
+        ));
+    }
+
+    public function storeStokBantuan(Request $request)
+    {
+        $validated = $request->validate([
+            'nama_item' => 'required|string|max:150',
+            'id_kategori' => 'required|exists:app_md_kategori_stok,id_kategori',
+            'tipe' => 'required|in:MASUK,KELUAR',
+            'jumlah' => 'required|integer|min:1',
+            'satuan' => 'required|string|max:50',
+            'tanggal' => 'required|date',
+            'sumber' => 'nullable|string|max:150',
+            'tujuan' => 'nullable|string|max:150',
+            'keterangan' => 'nullable|string|max:1000',
+        ], [
+            'nama_item.required' => 'Nama barang logistik wajib diisi.',
+            'id_kategori.required' => 'Pilih kategori logistik bantuan.',
+            'jumlah.min' => 'Jumlah barang minimal 1.',
+        ]);
+
+        $validated['dicatat_oleh'] = Auth::id();
+
+        StokBantuan::create($validated);
+
+        return redirect()->route('admin.logistik.stok')
+            ->with('success', 'Catatan stok bantuan "' . $validated['nama_item'] . '" berhasil disimpan.');
+    }
+
+    public function updateStokBantuan(Request $request, $id)
+    {
+        $stok = StokBantuan::findOrFail($id);
+
+        $validated = $request->validate([
+            'nama_item' => 'required|string|max:150',
+            'id_kategori' => 'required|exists:app_md_kategori_stok,id_kategori',
+            'tipe' => 'required|in:MASUK,KELUAR',
+            'jumlah' => 'required|integer|min:1',
+            'satuan' => 'required|string|max:50',
+            'tanggal' => 'required|date',
+            'sumber' => 'nullable|string|max:150',
+            'tujuan' => 'nullable|string|max:150',
+            'keterangan' => 'nullable|string|max:1000',
+        ]);
+
+        $stok->update($validated);
+
+        return redirect()->route('admin.logistik.stok')
+            ->with('success', 'Data stok bantuan #' . $stok->id_stok . ' berhasil diperbarui.');
+    }
+
+    public function destroyStokBantuan($id)
+    {
+        $stok = StokBantuan::withCount('distribusiBantuan')->findOrFail($id);
+
+        if ($stok->distribusi_bantuan_count > 0) {
+            return redirect()->route('admin.logistik.stok')
+                ->with('error', 'Item stok ini tidak dapat dihapus karena sudah memiliki riwayat distribusi ke posko/warga.');
+        }
+
+        $nama = $stok->nama_item;
+        $stok->delete();
+
+        return redirect()->route('admin.logistik.stok')
+            ->with('success', 'Catatan stok logistik "' . $nama . '" berhasil dihapus.');
+    }
+
+    /**
+     * Manajemen Distribusi & Penyaluran Bantuan Kedaruratan
+     */
+    public function distribusiBantuan(Request $request)
+    {
+        $query = DistribusiBantuan::with(['laporanBencana.bencana', 'laporanBencana.kecamatan', 'kelurahan.kecamatan', 'stokBantuan.kategoriStok', 'sender'])
+            ->latest('tanggal_kirim');
+
+        // Pencarian teks
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function ($sub) use ($q) {
+                $sub->where('penerima', 'like', "%{$q}%")
+                    ->orWhere('keterangan', 'like', "%{$q}%")
+                    ->orWhere('satuan', 'like', "%{$q}%")
+                    ->orWhereHas('stokBantuan', function ($s) use ($q) {
+                        $s->where('nama_item', 'like', "%{$q}%");
+                    })
+                    ->orWhereHas('kelurahan', function ($k) use ($q) {
+                        $k->where('nama_kelurahan', 'like', "%{$q}%")
+                          ->orWhereHas('kecamatan', function ($kc) use ($q) {
+                              $kc->where('nama_kecamatan', 'like', "%{$q}%");
+                          });
+                    })
+                    ->orWhereHas('laporanBencana', function ($l) use ($q) {
+                        $l->where('judul', 'like', "%{$q}%");
+                    });
+            });
+        }
+
+        // Filter Status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter Kecamatan
+        if ($request->filled('kecamatan_id')) {
+            $kecId = $request->kecamatan_id;
+            $query->where(function ($q) use ($kecId) {
+                $q->whereHas('kelurahan', function ($k) use ($kecId) {
+                    $k->where('id_kecamatan', $kecId);
+                })->orWhereHas('laporanBencana', function ($l) use ($kecId) {
+                    $l->where('id_kecamatan', $kecId);
+                });
+            });
+        }
+
+        $distribusiList = $query->paginate(10)->withQueryString();
+
+        // Metrik Distribusi
+        $totalDistribusi = DistribusiBantuan::count();
+        $totalTerkirim = DistribusiBantuan::where('status', 'Selesai')->count();
+        $totalProses = DistribusiBantuan::where('status', 'Proses Kirim')->count();
+        $totalTiba = DistribusiBantuan::where('status', 'Tiba di Lokasi')->count();
+        $totalUnitKirim = DistribusiBantuan::sum('jumlah');
+
+        $laporanList = LaporanBencana::with('bencana')->latest('id_laporan')->take(30)->get();
+        $kecamatanList = Kecamatan::orderBy('nama_kecamatan')->get();
+        $kelurahanList = Kelurahan::orderBy('nama_kelurahan')->get();
+        $stokList = StokBantuan::orderBy('nama_item')->get();
+
+        return view('admin.logistik.distribusi', compact(
+            'distribusiList',
+            'totalDistribusi',
+            'totalTerkirim',
+            'totalProses',
+            'totalTiba',
+            'totalUnitKirim',
+            'laporanList',
+            'kecamatanList',
+            'kelurahanList',
+            'stokList'
+        ));
+    }
+
+    public function storeDistribusiBantuan(Request $request)
+    {
+        $validated = $request->validate([
+            'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
+            'id_kelurahan' => 'nullable|exists:app_kelurahan,id_kelurahan',
+            'id_stok' => 'nullable|exists:app_stok_bantuan,id_stok',
+            'jumlah' => 'required|integer|min:1',
+            'satuan' => 'required|string|max:50',
+            'tanggal_kirim' => 'required|date',
+            'tanggal_terima' => 'nullable|date',
+            'status' => 'required|in:Proses Kirim,Tiba di Lokasi,Selesai',
+            'penerima' => 'required|string|max:150',
+            'keterangan' => 'nullable|string|max:1000',
+        ], [
+            'penerima.required' => 'Nama penerima / penanggung jawab wajib diisi.',
+            'jumlah.min' => 'Jumlah barang distribusi minimal 1.',
+        ]);
+
+        $validated['dikirim_oleh'] = Auth::id();
+
+        DistribusiBantuan::create($validated);
+
+        return redirect()->route('admin.logistik.distribusi')
+            ->with('success', 'Data penyaluran logistik ke "' . $validated['penerima'] . '" berhasil dicatat.');
+    }
+
+    public function updateDistribusiBantuan(Request $request, $id)
+    {
+        $distribusi = DistribusiBantuan::findOrFail($id);
+
+        $validated = $request->validate([
+            'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
+            'id_kelurahan' => 'nullable|exists:app_kelurahan,id_kelurahan',
+            'id_stok' => 'nullable|exists:app_stok_bantuan,id_stok',
+            'jumlah' => 'required|integer|min:1',
+            'satuan' => 'required|string|max:50',
+            'tanggal_kirim' => 'required|date',
+            'tanggal_terima' => 'nullable|date',
+            'status' => 'required|in:Proses Kirim,Tiba di Lokasi,Selesai',
+            'penerima' => 'required|string|max:150',
+            'keterangan' => 'nullable|string|max:1000',
+        ]);
+
+        $distribusi->update($validated);
+
+        return redirect()->route('admin.logistik.distribusi')
+            ->with('success', 'Data distribusi bantuan #' . $distribusi->id_distribusi . ' berhasil diperbarui.');
+    }
+
+    public function destroyDistribusiBantuan($id)
+    {
+        $distribusi = DistribusiBantuan::findOrFail($id);
+        $distribusi->delete();
+
+        return redirect()->route('admin.logistik.distribusi')
+            ->with('success', 'Catatan distribusi bantuan berhasil dihapus.');
+    }
+
+    /**
+     * Manajemen Master Data Jenis Bencana (CRUD, Metrik Kejadian, Zonasi Rawan)
+     */
+    public function dataBencana(Request $request)
+    {
+        $query = Bencana::withCount(['laporanBencana', 'daerahRawan', 'prediksiBencana']);
+
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function ($sub) use ($q) {
+                $sub->where('nama_bencana', 'like', "%{$q}%")
+                    ->orWhere('deskripsi', 'like', "%{$q}%");
+            });
+        }
+
+        $sort = $request->get('sort', 'nama');
+        switch ($sort) {
+            case 'terbanyak':
+                $query->orderByDesc('laporan_bencana_count');
+                break;
+            case 'rawan':
+                $query->orderByDesc('daerah_rawan_count');
+                break;
+            case 'terbaru':
+                $query->orderByDesc('id_bencana');
+                break;
+            default:
+                $query->orderBy('nama_bencana', 'asc');
+                break;
+        }
+
+        $bencanaList = $query->paginate(10)->withQueryString();
+
+        $totalBencana = Bencana::count();
+        $totalLaporanTerkait = LaporanBencana::count();
+        $totalTitikRawan = DaerahRawan::count();
+
+        $topBencana = Bencana::withCount('laporanBencana')
+            ->orderByDesc('laporan_bencana_count')
+            ->first();
+
+        $availableIcons = [
+            ['filename' => '/icon/banjir.png', 'label' => 'Banjir / Genangan'],
+            ['filename' => '/icon/tanah_longsor.png', 'label' => 'Tanah Longsor'],
+            ['filename' => '/icon/angin_puting_beliung.png', 'label' => 'Angin Puting Beliung'],
+            ['filename' => '/icon/angin_kencang.png', 'label' => 'Angin Kencang / Badai'],
+            ['filename' => '/icon/kebakaran_hutan.png', 'label' => 'Kebakaran Hutan / Lahan'],
+            ['filename' => '/icon/kebakaran_rumah.png', 'label' => 'Kebakaran Pemukiman'],
+            ['filename' => '/icon/gempa_bumi.png', 'label' => 'Gempa Bumi'],
+            ['filename' => '/icon/gunung_meletus.png', 'label' => 'Gunung Meletus / Erupsi'],
+            ['filename' => '/icon/kekeringan.png', 'label' => 'Kekeringan / Krisis Air'],
+        ];
+
+        return view('admin.bencana.index', compact(
+            'bencanaList',
+            'totalBencana',
+            'totalLaporanTerkait',
+            'totalTitikRawan',
+            'topBencana',
+            'availableIcons'
+        ));
+    }
+
+    public function storeBencana(Request $request)
+    {
+        $validated = $request->validate([
+            'nama_bencana' => 'required|string|max:100|unique:app_md_bencana,nama_bencana',
+            'deskripsi' => 'nullable|string|max:1000',
+            'icon_url' => 'nullable|string|max:255',
+        ], [
+            'nama_bencana.required' => 'Nama jenis bencana wajib diisi.',
+            'nama_bencana.unique' => 'Nama jenis bencana sudah terdaftar dalam sistem.',
+            'nama_bencana.max' => 'Nama jenis bencana maksimal 100 karakter.',
+        ]);
+
+        $bencana = Bencana::create($validated);
+
+        return redirect()->route('admin.bencana.index')
+            ->with('success', 'Jenis bencana "' . $bencana->nama_bencana . '" berhasil ditambahkan.');
+    }
+
+    public function updateBencana(Request $request, $id)
+    {
+        $bencana = Bencana::findOrFail($id);
+
+        $validated = $request->validate([
+            'nama_bencana' => 'required|string|max:100|unique:app_md_bencana,nama_bencana,' . $id . ',id_bencana',
+            'deskripsi' => 'nullable|string|max:1000',
+            'icon_url' => 'nullable|string|max:255',
+        ], [
+            'nama_bencana.required' => 'Nama jenis bencana wajib diisi.',
+            'nama_bencana.unique' => 'Nama jenis bencana tersebut sudah ada dalam sistem.',
+            'nama_bencana.max' => 'Nama jenis bencana maksimal 100 karakter.',
+        ]);
+
+        $bencana->update($validated);
+
+        return redirect()->route('admin.bencana.index')
+            ->with('success', 'Data jenis bencana "' . $bencana->nama_bencana . '" berhasil diperbarui.');
+    }
+
+    public function destroyBencana($id)
+    {
+        $bencana = Bencana::withCount(['laporanBencana', 'daerahRawan'])->findOrFail($id);
+
+        if ($bencana->laporan_bencana_count > 0 || $bencana->daerah_rawan_count > 0) {
+            $alasan = [];
+            if ($bencana->laporan_bencana_count > 0) {
+                $alasan[] = $bencana->laporan_bencana_count . ' laporan kejadian';
+            }
+            if ($bencana->daerah_rawan_count > 0) {
+                $alasan[] = $bencana->daerah_rawan_count . ' titik zonasi rawan';
+            }
+            return redirect()->route('admin.bencana.index')
+                ->with('error', 'Tidak dapat menghapus jenis bencana "' . $bencana->nama_bencana . '" karena masih terhubung dengan ' . implode(' dan ', $alasan) . '.');
+        }
+
+        $nama = $bencana->nama_bencana;
+        $bencana->delete();
+
+        return redirect()->route('admin.bencana.index')
+            ->with('success', 'Jenis bencana "' . $nama . '" berhasil dihapus dari sistem.');
     }
 }

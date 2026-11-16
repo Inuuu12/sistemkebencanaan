@@ -8,26 +8,15 @@
     <!-- 1. HEADER HALAMAN -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
-            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-slate-800 transition-colors">Admin</a>
-                <span>/</span>
-                <span class="text-[#ea5921]">Data Kerusakan</span>
-            </div>
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
                 <span>Data Kerusakan Bangunan & Fasilitas</span>
             </h1>
-            <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
-                Inventarisasi dampak fisik pada rumah tinggal, sarana ibadah, fasilitas pendidikan, dan infrastruktur umum Kabupaten Bogor.
-            </p>
         </div>
 
         <div class="flex items-center gap-2.5 self-start sm:self-auto">
             <button type="button" onclick="openCreateModal()" 
                     class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#ea5921] text-white hover:bg-[#d94812] transition shadow-sm shadow-orange-500/20 cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Catat Kerusakan Baru</span>
+                <span>Tambah Kerusakan Baru</span>
             </button>
         </div>
     </div>
@@ -72,7 +61,6 @@
                 <span class="text-2xl font-black text-slate-900">{{ number_format($totalInsidenKerusakan) }}</span>
                 <span class="text-xs text-slate-500">Insiden</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Terverifikasi di sistem</p>
         </div>
 
         <!-- Total Unit Rusak -->
@@ -82,46 +70,33 @@
                 <span class="text-2xl font-black text-slate-900">{{ number_format($totalUnit) }}</span>
                 <span class="text-xs text-slate-500 font-semibold">Unit</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Bangunan & fasilitas</p>
         </div>
 
         <!-- Rusak Berat -->
         <div class="p-4 rounded-2xl bg-white border border-rose-200/80 shadow-xs">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-rose-800 block">Rusak Berat (RB)</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-rose-800 block">Rusak Berat</span>
             <div class="flex items-baseline gap-1.5 mt-1">
                 <span class="text-2xl font-black text-rose-600">{{ number_format($totalRusakBerat) }}</span>
                 <span class="text-xs text-rose-800 font-semibold">Unit</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Roboh / struktur rusak</p>
         </div>
 
         <!-- Rusak Sedang -->
         <div class="p-4 rounded-2xl bg-white border border-amber-200/80 shadow-xs">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-800 block">Rusak Sedang (RS)</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-800 block">Rusak Sedang</span>
             <div class="flex items-baseline gap-1.5 mt-1">
                 <span class="text-2xl font-black text-amber-700">{{ number_format($totalRusakSedang) }}</span>
                 <span class="text-xs text-amber-800 font-semibold">Unit</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Sebagian dinding/atap</p>
         </div>
 
         <!-- Rusak Ringan -->
         <div class="p-4 rounded-2xl bg-white border border-yellow-200/90 shadow-xs">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-yellow-800 block">Rusak Ringan (RR)</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-yellow-800 block">Rusak Ringan</span>
             <div class="flex items-baseline gap-1.5 mt-1">
                 <span class="text-2xl font-black text-yellow-700">{{ number_format($totalRusakRingan) }}</span>
                 <span class="text-xs text-yellow-800 font-semibold">Unit</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Retak non-struktural</p>
-        </div>
-
-        <!-- Estimasi Kerugian -->
-        <div class="p-4 rounded-2xl bg-white border border-blue-200/80 shadow-xs">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-800 block">Taksiran Kerugian</span>
-            <div class="flex items-baseline gap-1 mt-1">
-                <span class="text-base font-black text-blue-700">Rp {{ number_format($totalEstimasiKerugian, 0, ',', '.') }}</span>
-            </div>
-            <p class="text-[11px] text-slate-500 mt-1">Taksiran kerugian fisik</p>
         </div>
     </div>
 

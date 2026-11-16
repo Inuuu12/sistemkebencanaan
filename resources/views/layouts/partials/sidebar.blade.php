@@ -38,6 +38,8 @@
             @php
                 $pendingCount = \App\Models\LaporanBencana::where('status', 'Pending')->count();
                 $isLaporanActive = request()->routeIs('admin.laporan.*') || request()->routeIs('admin.korban.*') || request()->routeIs('admin.pengungsian.*') || request()->routeIs('admin.kerusakan.*') || request()->has('status');
+                $isLogistikActive = request()->routeIs('admin.logistik.*');
+                $isWilayahActive = request()->routeIs('admin.bencana.*');
             @endphp
 
             <!-- Menu dengan Submenu 1: Laporan Bencana -->
@@ -100,28 +102,31 @@
             <!-- Menu dengan Submenu 2: Logistik dan Bantuan -->
             <div>
                 <button type="button" onclick="toggleSubmenu('submenu-logistik', 'arrow-logistik')" 
-                    class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-50 group">
+                    class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ $isLogistikActive ? 'bg-orange-50/60 text-[#ea5921] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }} group">
                     <div class="flex items-center gap-3">
-                        <svg class="w-4 h-4 shrink-0 text-slate-500 group-hover:text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 shrink-0 {{ $isLogistikActive ? 'text-[#ea5921]' : 'text-slate-500 group-hover:text-slate-700' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                         </svg>
                         <span>Logistik & Bantuan</span>
                     </div>
-                    <svg id="arrow-logistik" class="w-4 h-4 text-slate-400 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg id="arrow-logistik" class="w-4 h-4 text-slate-400 transition-transform duration-300 ease-in-out {{ $isLogistikActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
 
                 <!-- Submenu Animasi -->
-                <div id="submenu-logistik" class="submenu-collapse overflow-hidden transition-all duration-300 ease-in-out" style="max-height: 0px;">
+                <div id="submenu-logistik" class="submenu-collapse overflow-hidden transition-all duration-300 ease-in-out" 
+                     style="{{ $isLogistikActive ? '' : 'max-height: 0px;' }}">
                     <ul class="pl-8 pr-2 py-1 space-y-1 border-l-2 border-slate-100 ml-4 my-1">
                         <li>
-                            <a href="#" class="block py-1.5 px-3 rounded-lg text-xs font-medium text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50 transition-colors">
+                            <a href="{{ route('admin.logistik.stok') }}" 
+                               class="block py-1.5 px-3 rounded-lg text-xs font-medium {{ request()->routeIs('admin.logistik.stok*') ? 'text-[#ea5921] bg-orange-50 font-bold' : 'text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50' }} transition-colors">
                                 Gudang & Stok Bantuan
                             </a>
                         </li>
                         <li>
-                            <a href="#" class="block py-1.5 px-3 rounded-lg text-xs font-medium text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50 transition-colors">
+                            <a href="{{ route('admin.logistik.distribusi') }}" 
+                               class="block py-1.5 px-3 rounded-lg text-xs font-medium {{ request()->routeIs('admin.logistik.distribusi*') ? 'text-[#ea5921] bg-orange-50 font-bold' : 'text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50' }} transition-colors">
                                 Distribusi Bantuan
                             </a>
                         </li>
@@ -159,7 +164,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#" class="block py-1.5 px-3 rounded-lg text-xs font-medium text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50 transition-colors">
+                            <a href="{{ route('admin.bencana.index') }}" class="block py-1.5 px-3 rounded-lg text-xs font-medium {{ request()->routeIs('admin.bencana.*') ? 'text-[#ea5921] bg-orange-50 font-bold' : 'text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50' }} transition-colors">
                                 Jenis Bencana
                             </a>
                         </li>

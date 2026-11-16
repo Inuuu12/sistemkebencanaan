@@ -8,25 +8,14 @@
     <!-- 1. HEADER HALAMAN -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
-            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-slate-800 transition-colors">Admin</a>
-                <span>/</span>
-                <span class="text-[#ea5921]">Data Pengungsian</span>
-            </div>
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
                 <span>Data Pengungsian & Posko Evakuasi</span>
             </h1>
-            <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
-                Pemantauan daya tampung, logistik hunian, dan sebaran warga mengungsi di titik posko darurat Kabupaten Bogor.
-            </p>
         </div>
 
         <div class="flex items-center gap-2.5 self-start sm:self-auto">
             <button type="button" onclick="openCreateModal()" 
                     class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#ea5921] text-white hover:bg-[#d94812] transition shadow-sm shadow-orange-500/20 cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
                 <span>Tambah Posko Pengungsian</span>
             </button>
         </div>
@@ -72,7 +61,6 @@
                 <span class="text-2xl font-black text-slate-900">{{ number_format($totalPosko) }}</span>
                 <span class="text-xs text-slate-500">Titik</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Gedung / Aula / Tenda</p>
         </div>
 
         <!-- Posko Aktif -->
@@ -82,7 +70,6 @@
                 <span class="text-2xl font-black text-emerald-700">{{ number_format($poskoAktif) }}</span>
                 <span class="text-xs text-emerald-800 font-semibold">Aktif</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Sedang menampung warga</p>
         </div>
 
         <!-- Total Jiwa Mengungsi -->
@@ -92,7 +79,6 @@
                 <span class="text-2xl font-black text-blue-700">{{ number_format($totalPengungsi) }}</span>
                 <span class="text-xs text-blue-800 font-semibold">Jiwa</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Dalam naungan posko</p>
         </div>
 
         <!-- Total Daya Tampung -->
@@ -105,7 +91,6 @@
             @php
                 $persenIsi = $totalKapasitas > 0 ? round(($totalPengungsi / $totalKapasitas) * 100) : 0;
             @endphp
-            <p class="text-[11px] font-medium text-slate-600 mt-1">Keterisian: {{ $persenIsi }}%</p>
         </div>
 
         <!-- Balita & Anak -->
@@ -115,7 +100,6 @@
                 <span class="text-2xl font-black text-amber-700">{{ number_format($totalBalita) }}</span>
                 <span class="text-xs text-amber-800 font-semibold">Jiwa</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Prioritas susu & nutrisi</p>
         </div>
 
         <!-- Lansia -->
@@ -125,7 +109,6 @@
                 <span class="text-2xl font-black text-purple-700">{{ number_format($totalLansia) }}</span>
                 <span class="text-xs text-purple-800 font-semibold">Jiwa</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">Prioritas medis rutin</p>
         </div>
     </div>
 
@@ -184,14 +167,13 @@
     <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
         <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <h2 class="font-bold text-sm text-slate-900">Daftar Titik Posko & Pengungsian Darurat</h2>
-            <span class="text-xs text-slate-500">Total: <strong>{{ $poskoList->total() }}</strong> titik</span>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
                     <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold text-[11px] uppercase tracking-wider">
-                        <th class="py-3 px-4 w-12 text-center">#</th>
+                        <th class="py-3 px-4 w-12 text-center">No</th>
                         <th class="py-3 px-4 min-w-[220px]">Nama Posko & Jenis</th>
                         <th class="py-3 px-4 min-w-[190px]">Lokasi Wilayah</th>
                         <th class="py-3 px-4 min-w-[180px]">Keterisian Kapasitas</th>

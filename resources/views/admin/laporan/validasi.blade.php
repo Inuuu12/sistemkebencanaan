@@ -199,8 +199,8 @@
                         </span>
                     </div>
 
-                    <!-- Status Pill -->
-                    <div>
+                    <!-- Status Pill & Aksi Hapus -->
+                    <div class="flex items-center gap-2">
                         @if($item->status === 'Pending')
                             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 shadow-xs">
                                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
@@ -219,6 +219,15 @@
                                 Ditolak
                             </span>
                         @endif
+
+                        <button type="button" 
+                                onclick="confirmDeleteReport({{ $item->id_laporan }}, '{{ addslashes($item->judul) }}')"
+                                title="Hapus Permanen Aduan #ADU-{{ str_pad($item->id_laporan, 5, '0', STR_PAD_LEFT) }}" 
+                                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
@@ -364,6 +373,19 @@
                                 </button>
                                 @endif
                             </form>
+                        </div>
+
+                        <!-- Tombol Hapus Aduan -->
+                        <div class="pt-2 border-t border-slate-200">
+                            <button type="button" 
+                                    onclick="confirmDeleteReport({{ $item->id_laporan }}, '{{ addslashes($item->judul) }}')"
+                                    class="w-full py-1.5 px-3 rounded-lg bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-700 font-bold text-xs border border-slate-200 hover:border-rose-200 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                                    title="Hapus Aduan Warga Secara Permanen">
+                                <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                <span>Hapus Aduan</span>
+                            </button>
                         </div>
 
                         <!-- Catatan Riwayat Terakhir jika ada -->
@@ -593,6 +615,16 @@
         lb.classList.add('hidden');
     }
 
+    // 3. Konfirmasi Hapus Permanen Aduan
+    function confirmDeleteReport(id, title) {
+        const formattedId = '#ADU-' + String(id).padStart(5, '0');
+        if (confirm(`Apakah Anda yakin ingin menghapus data aduan ${formattedId} ("${title}") secara permanen?\n\nPerhatian: Data laporan beserta riwayat penanganan dan bukti foto akan terhapus dan tidak dapat dipulihkan.`)) {
+            const form = document.getElementById('delete_report_form');
+            form.action = `/admin/laporan/${id}`;
+            form.submit();
+        }
+    }
+
     // Tutup modal jika tombol ESC ditekan
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
@@ -601,6 +633,12 @@
         }
     });
 </script>
+
+<!-- FORM DELETE TERSEMBUNYI -->
+<form id="delete_report_form" method="POST" action="" class="hidden">
+    @csrf
+    @method('DELETE')
+</form>
 @endpush
 
 @endsection

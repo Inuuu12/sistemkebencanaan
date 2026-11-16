@@ -9,14 +9,36 @@
 @section('hide_footer', true)
 
 @section('content')
+<style>
+    /* Styling Side Toolbar Collapsible ala Coconext */
+    #side-toolbar-wrapper {
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #side-toolbar-wrapper.sidebar-collapsed {
+        transform: translateX(calc(-100% + 38px));
+    }
+    @media (min-width: 640px) {
+        #side-toolbar-wrapper.sidebar-collapsed {
+            transform: translateX(calc(-100% + 44px));
+        }
+    }
+    #side-toolbar-wrapper.sidebar-open {
+        transform: translateX(0);
+    }
+    #side-toolbar-toggle-btn {
+        box-shadow: 4px 2px 12px rgba(0, 0, 0, 0.1);
+    }
+</style>
 <div class="relative w-full h-full overflow-hidden select-none">
     
     <!-- map -->
     <div id="public-map" class="absolute inset-0 z-0 bg-slate-100 dark:bg-slate-900 w-full h-full"></div>
 
-    <!-- bar side publik -->
-    <div class="absolute top-4 sm:top-5 left-3 sm:left-4 z-[400] flex flex-col gap-2 pointer-events-none">
-        <div id="quick-tools-bar" class="pointer-events-auto flex sm:flex-col items-center gap-2 p-1.5 sm:p-2 rounded-2xl sm:rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800/80 shadow-lg shadow-black/5 max-w-[calc(100vw-24px)] overflow-x-auto sm:overflow-visible">
+    <!-- bar side publik dengan Tombol Toggle Panah Samping (Ala Coconext) -->
+    <div id="side-toolbar-wrapper" class="sidebar-collapsed absolute top-4 sm:top-5 left-0 z-[400] flex items-center transition-transform duration-300 ease-in-out pointer-events-none">
+        
+        <!-- Toolbar Vertikal Cepat -->
+        <div id="quick-tools-bar" class="pointer-events-auto ml-2 sm:ml-3 flex flex-col items-center gap-2 p-1.5 sm:p-2 rounded-2xl sm:rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/60 dark:border-slate-800/80 shadow-xl shadow-black/10 shrink-0">
             
             <!-- Berita Link -->
             <a href="{{ route('public.news') }}" title="Berita Kebencanaan"
@@ -50,7 +72,7 @@
                 </svg>
             </button>
 
-            <!-- button informasi kejadian bencana -->
+            <!-- button informasi kejadian bencana (akses cepat) -->
             <button type="button" onclick="toggleModal('info-bencana-panel')" title="Daftar Kejadian Bencana"
                 class="group relative flex items-center justify-center p-2.5 sm:p-3 rounded-xl sm:rounded-full bg-white/90 dark:bg-slate-800/90 text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 shrink-0">
                 <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,21 +94,45 @@
                 </svg>
             </button>
         </div>
+
+        <!-- Tombol Panah Samping (Toggle ala Coconext) -->
+        <button id="side-toolbar-toggle-btn" type="button" onclick="toggleSideToolbar()" title="Tampilkan Menu Alat"
+            class="pointer-events-auto ml-1.5 flex items-center justify-center w-8 h-12 sm:w-9 sm:h-14 rounded-r-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-l-0 border-slate-200 dark:border-slate-800 shadow-lg shadow-black/10 text-slate-600 dark:text-slate-300 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all cursor-pointer">
+            <svg id="side-toolbar-arrow-icon" class="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
     </div>
 
-    <!-- informasi jumlah kejadian -->
-    <div class="absolute top-4 right-3 sm:right-4 z-[400] pointer-events-none">
-        <div class="pointer-events-auto bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/60 dark:border-slate-800/80 rounded-2xl shadow-lg px-3.5 py-2 flex items-center gap-3">
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                    {{ $stats['total_laporan'] }} Kejadian
+    <!-- Tombol / Widget Kejadian di Kanan Bawah -->
+    <div class="absolute bottom-24 right-3 sm:right-4 z-[420] pointer-events-none">
+        <button type="button" onclick="toggleModal('info-bencana-panel')" title="Buka Daftar Kejadian Bencana"
+            class="pointer-events-auto group flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/60 dark:border-slate-800/80 shadow-xl shadow-black/10 hover:shadow-orange-500/10 hover:border-orange-300 dark:hover:border-orange-600 transition-all hover:scale-105 active:scale-95 cursor-pointer">
+            <div class="relative flex items-center justify-center w-8 h-8 rounded-xl bg-[#ea5921] text-white shadow-md shadow-orange-500/30">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                @if(count($reports) > 0)
+                <span class="absolute -top-1 -right-1 flex h-4 w-4">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex items-center justify-center rounded-full h-4 w-4 bg-red-600 text-[9px] font-black text-white">
+                        {{ count($reports) }}
+                    </span>
                 </span>
+                @endif
             </div>
-            <div class="h-3 w-px bg-slate-300 dark:bg-slate-700"></div>
-            <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                Kabupaten Bogor
+            <div class="text-left">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                        {{ $stats['total_laporan'] }} Kejadian
+                    </span>
+                </div>
+                <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500">Kabupaten Bogor</p>
             </div>
-        </div>
+            <svg class="w-4 h-4 text-slate-400 group-hover:text-[#ea5921] transition-colors ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+            </svg>
+        </button>
     </div>
 
     <!-- bar side bawah -->
@@ -123,8 +169,8 @@
         </div>
     </div>
 
-    <!-- panel informasi kejadian bencana -->
-    <div id="info-bencana-panel" class="hidden absolute top-20 left-3 sm:left-20 bottom-24 z-[500] w-[calc(100vw-24px)] sm:w-[380px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <!-- panel informasi kejadian bencana (Kanan Bawah) -->
+    <div id="info-bencana-panel" class="hidden absolute bottom-24 right-3 sm:right-4 z-[500] w-[calc(100vw-24px)] sm:w-[400px] max-h-[calc(100vh-140px)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <div class="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-950/60 text-[#ea5921]">
@@ -710,6 +756,26 @@
         }
     }
 
+    // TOGGLE SIDE TOOLBAR (ALA COCONEXT)
+    function toggleSideToolbar() {
+        const wrapper = document.getElementById('side-toolbar-wrapper');
+        const arrow = document.getElementById('side-toolbar-arrow-icon');
+        const btn = document.getElementById('side-toolbar-toggle-btn');
+        if (!wrapper || !arrow) return;
+
+        if (wrapper.classList.contains('sidebar-open')) {
+            wrapper.classList.remove('sidebar-open');
+            wrapper.classList.add('sidebar-collapsed');
+            arrow.classList.remove('rotate-180');
+            btn.title = 'Tampilkan Menu Alat';
+        } else {
+            wrapper.classList.remove('sidebar-collapsed');
+            wrapper.classList.add('sidebar-open');
+            arrow.classList.add('rotate-180');
+            btn.title = 'Sembunyikan Menu Alat';
+        }
+    }
+
     // MODAL HANDLERS
     function toggleModal(modalId) {
         const el = document.getElementById(modalId);
@@ -815,7 +881,7 @@
             icon: '🛠️',
             title: 'Alat Cepat (Quick Tools)',
             subtitle: 'Tombol Pintas di Kiri Layar',
-            desc: 'Gunakan panel tombol mengambang di sisi kiri untuk membuka Berita terkini, Kontak Darurat BPBD, Filter Wilayah, Pilihan Layer Peta, dan Daftar Informasi Kejadian.'
+            desc: 'Tekan tombol tanda panah di sisi kiri layar untuk membuka/menutup bilah alat cepat: Berita terkini, Kontak Darurat BPBD, Filter Wilayah, Pilihan Layer Peta, dan Lokasi GPS.'
         },
         {
             badge: 'Langkah 3 dari 4',
