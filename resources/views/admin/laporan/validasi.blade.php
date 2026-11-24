@@ -24,65 +24,111 @@
         </div>
     </div>
 
-    <!-- 2. STATUS TAB COUNTER (Pills Navigation) -->
-    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+    <!-- BANNER KHUSUS: ADMIN KELURAHAN / DESA -->
+    @if(Auth::user() && in_array(Auth::user()->role, ['ADMIN_KELURAHAN', 'KELURAHAN']))
+    <div class="p-4 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+            </div>
+            <div>
+                <span class="text-[11px] font-bold text-orange-100 uppercase tracking-wider block">Panel Otoritas Validasi Desa / Kelurahan</span>
+                <h3 class="font-extrabold text-base text-white">
+                    Kelurahan {{ Auth::user()->kelurahan?->nama_kelurahan ?? 'Wilayah Kelurahan' }} &bull; Kec. {{ Auth::user()->kecamatan?->nama_kecamatan ?? '' }}
+                </h3>
+            </div>
+        </div>
+        <div class="text-xs bg-white/20 px-3.5 py-1.5 rounded-xl font-semibold self-start sm:self-auto backdrop-blur-xs">
+            Kewenangan: Validasi Lapangan & Eskalasi (Kecamatan / BPBD)
+        </div>
+    </div>
+    @endif
+
+    <!-- 2. STATUS TAB COUNTER (Pills Navigation - 7 Kategori) -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
         <!-- Tab: Semua -->
         <a href="{{ route('admin.laporan.validasi', array_merge(request()->except('status', 'page'), [])) }}" 
-           class="p-3.5 rounded-2xl border transition-all flex items-center justify-between {{ !request('status') ? 'bg-white border-slate-300 text-white shadow-md' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50' }}">
+           class="p-3 rounded-2xl border transition-all flex items-center justify-between {{ !request('status') ? 'bg-white border-slate-300 text-slate-900 shadow-sm ring-2 ring-slate-400/20' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50' }}">
             <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider block {{ !request('status') ? 'text-black' : 'text-slate-400' }}">Semua Aduan</span>
-                <span class="text-xl font-extrabold text-black block mt-0.5">{{ $totalAll }}</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider block text-slate-400">Semua</span>
+                <span class="text-lg font-black text-slate-900 block mt-0.5">{{ $totalAll }}</span>
             </div>
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center {{ !request('status') ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-500' }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center {{ !request('status') ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500' }}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
             </div>
         </a>
 
         <!-- Tab: Menunggu Validasi -->
         <a href="{{ route('admin.laporan.validasi', array_merge(request()->except('status', 'page'), ['status' => 'Pending'])) }}" 
-           class="p-3.5 rounded-2xl border transition-all flex items-center justify-between {{ request('status') === 'Pending' ? 'bg-amber-500 border-amber-500 text-white shadow-md' : 'bg-white border-slate-200 text-slate-700 hover:border-amber-300 hover:bg-amber-50/40' }}">
+           class="p-3 rounded-2xl border transition-all flex items-center justify-between {{ request('status') === 'Pending' ? 'bg-amber-500 border-amber-500 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:border-amber-300 hover:bg-amber-50/40' }}">
             <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider block {{ request('status') === 'Pending' ? 'text-amber-100' : 'text-amber-600' }}">Perlu Validasi</span>
-                <span class="text-xl font-extrabold block mt-0.5">{{ $totalPending }}</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider block {{ request('status') === 'Pending' ? 'text-amber-100' : 'text-amber-600' }}">Perlu Validasi</span>
+                <span class="text-lg font-black block mt-0.5">{{ $totalPending }}</span>
             </div>
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center {{ request('status') === 'Pending' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-600' }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center {{ request('status') === 'Pending' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-600' }}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+        </a>
+
+        <!-- Tab: Diteruskan ke Kecamatan -->
+        <a href="{{ route('admin.laporan.validasi', array_merge(request()->except('status', 'page'), ['status' => 'Diteruskan ke Kecamatan'])) }}" 
+           class="p-3 rounded-2xl border transition-all flex items-center justify-between {{ request('status') === 'Diteruskan ke Kecamatan' ? 'bg-purple-600 border-purple-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:border-purple-300 hover:bg-purple-50/40' }}">
+            <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider block {{ request('status') === 'Diteruskan ke Kecamatan' ? 'text-purple-100' : 'text-purple-600' }}">Ke Kecamatan</span>
+                <span class="text-lg font-black block mt-0.5">{{ $totalDiteruskanKec }}</span>
+            </div>
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center {{ request('status') === 'Diteruskan ke Kecamatan' ? 'bg-purple-700 text-white' : 'bg-purple-100 text-purple-600' }}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            </div>
+        </a>
+
+        <!-- Tab: Diteruskan ke BPBD Pusat -->
+        <a href="{{ route('admin.laporan.validasi', array_merge(request()->except('status', 'page'), ['status' => 'Diteruskan ke BPBD'])) }}" 
+           class="p-3 rounded-2xl border transition-all flex items-center justify-between {{ request('status') === 'Diteruskan ke BPBD' ? 'bg-red-600 border-red-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:border-red-300 hover:bg-red-50/40' }}">
+            <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider block {{ request('status') === 'Diteruskan ke BPBD' ? 'text-red-100' : 'text-red-600' }}">Ke BPBD Darurat</span>
+                <span class="text-lg font-black block mt-0.5">{{ $totalDiteruskanBPBD }}</span>
+            </div>
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center {{ request('status') === 'Diteruskan ke BPBD' ? 'bg-red-700 text-white' : 'bg-red-100 text-red-600' }}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             </div>
         </a>
 
         <!-- Tab: Sedang Ditangani -->
         <a href="{{ route('admin.laporan.validasi', array_merge(request()->except('status', 'page'), ['status' => 'Handling'])) }}" 
-           class="p-3.5 rounded-2xl border transition-all flex items-center justify-between {{ request('status') === 'Handling' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50/40' }}">
+           class="p-3 rounded-2xl border transition-all flex items-center justify-between {{ request('status') === 'Handling' ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50/40' }}">
             <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider block {{ request('status') === 'Handling' ? 'text-blue-100' : 'text-blue-600' }}">Ditangani</span>
-                <span class="text-xl font-extrabold block mt-0.5">{{ $totalHandling }}</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider block {{ request('status') === 'Handling' ? 'text-blue-100' : 'text-blue-600' }}">Ditangani TRC</span>
+                <span class="text-lg font-black block mt-0.5">{{ $totalHandling }}</span>
             </div>
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center {{ request('status') === 'Handling' ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-600' }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center {{ request('status') === 'Handling' ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-600' }}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </div>
         </a>
 
         <!-- Tab: Selesai -->
         <a href="{{ route('admin.laporan.validasi', array_merge(request()->except('status', 'page'), ['status' => 'Selesai'])) }}" 
-           class="p-3.5 rounded-2xl border transition-all flex items-center justify-between {{ request('status') === 'Selesai' ? 'bg-emerald-600 border-emerald-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/40' }}">
+           class="p-3 rounded-2xl border transition-all flex items-center justify-between {{ request('status') === 'Selesai' ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/40' }}">
             <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider block {{ request('status') === 'Selesai' ? 'text-emerald-100' : 'text-emerald-600' }}">Selesai</span>
-                <span class="text-xl font-extrabold block mt-0.5">{{ $totalSelesai }}</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider block {{ request('status') === 'Selesai' ? 'text-emerald-100' : 'text-emerald-600' }}">Selesai</span>
+                <span class="text-lg font-black block mt-0.5">{{ $totalSelesai }}</span>
             </div>
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center {{ request('status') === 'Selesai' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-600' }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center {{ request('status') === 'Selesai' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-600' }}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
         </a>
 
         <!-- Tab: Ditolak / Hoaks -->
         <a href="{{ route('admin.laporan.validasi', array_merge(request()->except('status', 'page'), ['status' => 'Ditolak'])) }}" 
-           class="col-span-2 sm:col-span-1 p-3.5 rounded-2xl border transition-all flex items-center justify-between {{ request('status') === 'Ditolak' ? 'bg-rose-600 border-rose-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-700 hover:border-rose-300 hover:bg-rose-50/40' }}">
+           class="p-3 rounded-2xl border transition-all flex items-center justify-between {{ request('status') === 'Ditolak' ? 'bg-rose-600 border-rose-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:border-rose-300 hover:bg-rose-50/40' }}">
             <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider block {{ request('status') === 'Ditolak' ? 'text-rose-100' : 'text-rose-600' }}">Ditolak</span>
-                <span class="text-xl font-extrabold block mt-0.5">{{ $totalDitolak }}</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider block {{ request('status') === 'Ditolak' ? 'text-rose-100' : 'text-rose-600' }}">Ditolak</span>
+                <span class="text-lg font-black block mt-0.5">{{ $totalDitolak }}</span>
             </div>
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center {{ request('status') === 'Ditolak' ? 'bg-rose-700 text-white' : 'bg-rose-100 text-rose-600' }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center {{ request('status') === 'Ditolak' ? 'bg-rose-700 text-white' : 'bg-rose-100 text-rose-600' }}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
         </a>
     </div>
@@ -119,11 +165,19 @@
                 </select>
             </div>
 
+            @if(!empty($isKelurahanAdmin))
+            <div class="sm:col-span-2">
+                <div class="w-full py-2.5 px-3 rounded-xl border border-orange-200 bg-orange-50/70 text-xs text-orange-900 font-bold flex items-center justify-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                    <span class="truncate">Kel. {{ Auth::user()->kelurahan?->nama_kelurahan ?? '-' }}</span>
+                </div>
+            </div>
+            @else
             <!-- Filter Kecamatan -->
             <div class="sm:col-span-2">
                 <select name="kecamatan_id" 
                         class="w-full py-2.5 px-3 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition bg-white text-slate-700">
-                    <option value="">Semua Wilayah</option>
+                    <option value="">Semua Kecamatan</option>
                     @foreach($districts as $k)
                     <option value="{{ $k->id_kecamatan }}" {{ request('kecamatan_id') == $k->id_kecamatan ? 'selected' : '' }}>
                         {{ $k->nama_kecamatan }}
@@ -131,6 +185,7 @@
                     @endforeach
                 </select>
             </div>
+            @endif
 
             <!-- Tombol Aksi -->
             <div class="sm:col-span-2 flex items-center gap-2">
@@ -206,9 +261,19 @@
                                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                                 Menunggu Validasi
                             </span>
+                        @elseif($item->status === 'Diteruskan ke BPBD')
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300 shadow-xs">
+                                <span class="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
+                                🚨 Diteruskan ke BPBD Pusat
+                            </span>
+                        @elseif($item->status === 'Diteruskan ke Kecamatan')
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-xs">
+                                <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                Diteruskan ke Kecamatan
+                            </span>
                         @elseif($item->status === 'Handling')
                             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 shadow-xs">
-                                Dalam Penanganan
+                                Ditangani TRC
                             </span>
                         @elseif($item->status === 'Selesai')
                             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
@@ -265,6 +330,16 @@
                             <p class="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed bg-slate-50/70 p-3 rounded-xl border border-slate-100">
                                 {{ $item->deskripsi ?: 'Tidak ada rincian tambahan yang dicantumkan pelapor.' }}
                             </p>
+
+                            @if($item->catatan_kelurahan)
+                            <div class="mt-2.5 p-3 rounded-xl bg-orange-50/90 border border-orange-200 text-xs">
+                                <div class="flex items-center gap-1.5 font-bold text-orange-900 mb-0.5">
+                                    <svg class="w-4 h-4 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                    <span>Catatan Verifikasi Lapangan Kelurahan:</span>
+                                </div>
+                                <p class="text-slate-700 leading-relaxed pl-5">{{ $item->catatan_kelurahan }}</p>
+                            </div>
+                            @endif
                         </div>
 
                         <!-- Data Pelapor & Kontak -->
@@ -348,11 +423,28 @@
                             
                             <form action="{{ route('admin.laporan.status', $item->id_laporan) }}" method="POST" class="grid grid-cols-2 gap-1.5">
                                 @csrf
+
+                                @if($item->status !== 'Diteruskan ke Kecamatan')
+                                <button type="submit" name="status" value="Diteruskan ke Kecamatan" 
+                                        class="py-1.5 px-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] border border-purple-200 transition text-center" 
+                                        title="Eskalasi ke Posko Kecamatan">
+                                    🏛️ Ke Kec.
+                                </button>
+                                @endif
+
+                                @if($item->status !== 'Diteruskan ke BPBD')
+                                <button type="submit" name="status" value="Diteruskan ke BPBD" 
+                                        class="py-1.5 px-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] border border-rose-200 transition text-center" 
+                                        title="Kirim Langsung ke BPBD Pusat (Darurat)">
+                                    🚨 Ke BPBD
+                                </button>
+                                @endif
+
                                 @if($item->status !== 'Handling')
                                 <button type="submit" name="status" value="Handling" 
                                         class="py-1.5 px-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] border border-blue-200 transition text-center" 
-                                        title="Kirim Tim TRC Lapangan">
-                                    🚀 Kirim TRC
+                                        title="Tangani Mandiri / Kerahkan Relawan Lapangan">
+                                    🚀 Tangani
                                 </button>
                                 @endif
 
@@ -367,9 +459,9 @@
                                 @if($item->status !== 'Ditolak')
                                 <button type="submit" name="status" value="Ditolak" 
                                         onclick="return confirm('Apakah Anda yakin ingin menolak laporan ini sebagai data fiktif / di luar wilayah?')"
-                                        class="py-1.5 px-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] border border-rose-200 transition text-center col-span-2" 
+                                        class="py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[11px] border border-slate-200 transition text-center col-span-2" 
                                         title="Tolak Laporan Fiktif">
-                                    ✕ Tolak / Laporan Fiktif
+                                    ✕ Tolak / Data Fiktif
                                 </button>
                                 @endif
                             </form>
@@ -488,12 +580,30 @@
                         </div>
                     </label>
 
+                    <!-- Opsi: Diteruskan ke Kecamatan -->
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/30 cursor-pointer transition">
+                        <input type="radio" name="status" value="Diteruskan ke Kecamatan" id="status-kecamatan" class="text-purple-600 focus:ring-purple-500">
+                        <div>
+                            <span class="font-bold text-purple-700 block">🏛️ Teruskan ke Kecamatan</span>
+                            <span class="text-[10px] text-slate-500 block">Eskalasi ke Posko Kecamatan</span>
+                        </div>
+                    </label>
+
+                    <!-- Opsi: Diteruskan ke BPBD -->
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
+                        <input type="radio" name="status" value="Diteruskan ke BPBD" id="status-bpbd" class="text-red-600 focus:ring-red-500">
+                        <div>
+                            <span class="font-bold text-red-700 block">🚨 Teruskan ke BPBD Pusat</span>
+                            <span class="text-[10px] text-slate-500 block">Kedaruratan butuh TRC Pusat</span>
+                        </div>
+                    </label>
+
                     <!-- Opsi: Handling -->
                     <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer transition">
                         <input type="radio" name="status" value="Handling" id="status-handling" class="text-blue-600 focus:ring-blue-500">
                         <div>
-                            <span class="font-bold text-blue-700 block">Terima & Kirim TRC</span>
-                            <span class="text-[10px] text-slate-500 block">Disposisi tim lapangan aktif</span>
+                            <span class="font-bold text-blue-700 block">🚀 Tangani Mandiri / TRC</span>
+                            <span class="text-[10px] text-slate-500 block">Disposisi tim relawan aktif</span>
                         </div>
                     </label>
 
@@ -501,7 +611,7 @@
                     <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30 cursor-pointer transition">
                         <input type="radio" name="status" value="Selesai" id="status-selesai" class="text-emerald-600 focus:ring-emerald-500">
                         <div>
-                            <span class="font-bold text-emerald-700 block">Tandai Selesai</span>
+                            <span class="font-bold text-emerald-700 block">✓ Tandai Selesai</span>
                             <span class="text-[10px] text-slate-500 block">Situasi sudah terkendali</span>
                         </div>
                     </label>
@@ -510,7 +620,7 @@
                     <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/30 cursor-pointer transition">
                         <input type="radio" name="status" value="Ditolak" id="status-ditolak" class="text-rose-600 focus:ring-rose-500">
                         <div>
-                            <span class="font-bold text-rose-700 block">Tolak Aduan</span>
+                            <span class="font-bold text-rose-700 block">✕ Tolak Aduan</span>
                             <span class="text-[10px] text-slate-500 block">Laporan fiktif / luar area</span>
                         </div>
                     </label>
@@ -578,6 +688,8 @@
         // Set radio status terpilih
         const radioMap = {
             'Pending': 'status-pending',
+            'Diteruskan ke Kecamatan': 'status-kecamatan',
+            'Diteruskan ke BPBD': 'status-bpbd',
             'Handling': 'status-handling',
             'Selesai': 'status-selesai',
             'Ditolak': 'status-ditolak'
@@ -586,8 +698,8 @@
         const radioElem = document.getElementById(currentRadioId);
         if (radioElem) radioElem.checked = true;
 
-        // Reset catatan textarea
-        document.getElementById('catatan').value = '';
+        // Reset atau isi catatan verifikasi
+        document.getElementById('catatan').value = report.catatan_kelurahan || (penanganan ? penanganan.catatan : '') || '';
 
         // Tampilkan modal
         modal.classList.remove('hidden');

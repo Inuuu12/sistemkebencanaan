@@ -32,8 +32,25 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+        $isKecamatanAdmin = $user && in_array($user->role, ['ADMIN_KECAMATAN', 'KECAMATAN']) && $user->id_kecamatan;
+
         $query = LaporanBencana::with(['bencana', 'kecamatan', 'kelurahan', 'korban'])
             ->latest('created_at');
+
+        // Pembatasan wilayah: Admin Kelurahan HANYA melihat aduan dari kelurahannya
+        if ($isKelurahanAdmin) {
+            $query->where('id_kelurahan', $user->id_kelurahan);
+        } elseif ($isKecamatanAdmin) {
+            $query->where('id_kecamatan', $user->id_kecamatan);
+        } elseif ($request->filled('kecamatan_id')) {
+            $query->where('id_kecamatan', $request->kecamatan_id);
+        }
+
+        if (!$isKelurahanAdmin && $request->filled('kelurahan_id')) {
+            $query->where('id_kelurahan', $request->kelurahan_id);
+        }
 
         // Filter pencarian
         if ($request->filled('q')) {
@@ -55,27 +72,44 @@ class DashboardController extends Controller
             $query->where('id_bencana', $request->bencana_id);
         }
 
-        // Filter kecamatan
-        if ($request->filled('kecamatan_id')) {
-            $query->where('id_kecamatan', $request->kecamatan_id);
-        }
-
         $reports = $query->paginate(10)->withQueryString();
 
-        // 1. Statistik Ringkas Atas
-        $totalReports = LaporanBencana::count();
-        $totalBencana = Bencana::count();
-        $totalPengungsi = Korban::sum('jumlah_mengungsi') ?: 12;
-        $totalKorbanJiwa = Korban::sum('jumlah_meninggal') ?: 0;
-        $pendingReports = LaporanBencana::where('status', 'Pending')->count();
-        $handlingReports = LaporanBencana::where('status', 'Handling')->count();
-        $completedReports = LaporanBencana::where('status', 'Selesai')->count();
+        // 1. Statistik Ringkas Atas (Ter-scope ke Kelurahan jika login Admin Kelurahan)
+        $baseReports = LaporanBencana::query();
+        if ($isKelurahanAdmin) {
+            $baseReports->where('id_kelurahan', $user->id_kelurahan);
+        } elseif ($isKecamatanAdmin) {
+            $baseReports->where('id_kecamatan', $user->id_kecamatan);
+        }
 
-        // 2. Data GIS Live Map (Titik Bencana, Zonasi Rawan, Titik Posko & Logistik)
-        $mapReports = LaporanBencana::with(['bencana', 'kecamatan', 'kelurahan'])
+        $totalReports = (clone $baseReports)->count();
+        $totalBencana = Bencana::count();
+        
+        $korbanQuery = Korban::query();
+        if ($isKelurahanAdmin) {
+            $korbanQuery->where(function ($k) use ($user) {
+                $k->where('id_kelurahan', $user->id_kelurahan)
+                  ->orWhereHas('laporanBencana', function ($l) use ($user) {
+                      $l->where('id_kelurahan', $user->id_kelurahan);
+                  });
+            });
+        }
+        $totalPengungsi = (clone $korbanQuery)->sum('jumlah_mengungsi') ?: ($isKelurahanAdmin ? 0 : 12);
+        $totalKorbanJiwa = (clone $korbanQuery)->sum('jumlah_meninggal') ?: 0;
+        $pendingReports = (clone $baseReports)->where('status', 'Pending')->count();
+        $handlingReports = (clone $baseReports)->where('status', 'Handling')->count();
+        $completedReports = (clone $baseReports)->where('status', 'Selesai')->count();
+
+        // 2. Data GIS Live Map (Hanya titik bencana kelurahan bersangkutan jika Admin Kelurahan)
+        $mapQuery = LaporanBencana::with(['bencana', 'kecamatan', 'kelurahan'])
             ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->get()
+            ->whereNotNull('longitude');
+        if ($isKelurahanAdmin) {
+            $mapQuery->where('id_kelurahan', $user->id_kelurahan);
+        } elseif ($isKecamatanAdmin) {
+            $mapQuery->where('id_kecamatan', $user->id_kecamatan);
+        }
+        $mapReports = $mapQuery->get()
             ->map(function ($r) {
                 $photos = [];
                 if ($r->foto_laporan) {
@@ -96,49 +130,80 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Zonasi Rawan (Poligon / Circle Lingkaran Merah, Kuning, Hijau)
-        $zonasiList = [
-            [
-                'name' => 'Zona Merah Puncak - Cisarua & Megamendung',
-                'type' => 'Tanah Longsor',
-                'level' => 'MERAH',
-                'color' => '#dc2626',
-                'lat' => -6.6980,
-                'lng' => 106.9320,
-                'radius' => 2400,
-                'description' => 'Kerentanan lereng curam tinggi, curah hujan ekstrem memicu pergerakan tanah.'
-            ],
-            [
-                'name' => 'Zona Merah Bantaran Ciliwung - Bojonggede',
-                'type' => 'Banjir Luapan',
-                'level' => 'MERAH',
-                'color' => '#dc2626',
-                'lat' => -6.4939,
-                'lng' => 106.7969,
-                'radius' => 1900,
-                'description' => 'Dataran rendah aliran sungai rawan limpasan air dan genangan permukiman.'
-            ],
-            [
-                'name' => 'Zona Kuning Cibinong Kota',
-                'type' => 'Genangan Air & Angin Kencang',
-                'level' => 'KUNING',
-                'color' => '#eab308',
-                'lat' => -6.4855,
-                'lng' => 106.8450,
-                'radius' => 2100,
-                'description' => 'Potensi genangan air 30-50 cm saat drainase meluap dan bahaya pohon tumbang.'
-            ],
-            [
-                'name' => 'Zona Hijau Sentul Babakan Madang',
-                'type' => 'Area Titik Kumpul Aman',
-                'level' => 'HIJAU',
-                'color' => '#16a34a',
-                'lat' => -6.5650,
-                'lng' => 106.8720,
-                'radius' => 2000,
-                'description' => 'Struktur tanah relatif stabil, lokasi evakuasi aman dan penyangga logistik.'
-            ],
-        ];
+        // Zonasi Rawan (Ambil dari tabel app_daerah_rawan, fallback ke sampel bawaan jika belum ada data)
+        $rawanDb = DaerahRawan::with(['kelurahan.kecamatan', 'bencana'])
+            ->where('is_active', true)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get();
+
+        if ($rawanDb->isNotEmpty()) {
+            $zonasiList = $rawanDb->map(function ($r) {
+                $zonaRaw = strtoupper(trim((string) $r->zona));
+                $isMerah = str_contains($zonaRaw, 'MERAH') || str_contains($zonaRaw, 'TINGGI');
+                $isKuning = str_contains($zonaRaw, 'KUNING') || str_contains($zonaRaw, 'SEDANG');
+                $color = $isMerah ? '#dc2626' : ($isKuning ? '#eab308' : '#16a34a');
+                $level = $isMerah ? 'MERAH' : ($isKuning ? 'KUNING' : 'HIJAU');
+
+                $namaLokasi = $r->kelurahan
+                    ? $r->kelurahan->nama_kelurahan . ($r->kelurahan->kecamatan ? ', ' . $r->kelurahan->kecamatan->nama_kecamatan : '')
+                    : 'Wilayah Rawan Bencana';
+
+                return [
+                    'name' => 'Zona ' . $level . ' - ' . $namaLokasi,
+                    'type' => $r->bencana?->nama_bencana ?? 'Potensi Bencana',
+                    'level' => $level,
+                    'color' => $color,
+                    'lat' => (float) $r->latitude,
+                    'lng' => (float) $r->longitude,
+                    'radius' => (int) ($r->radius_meter ?: 1500),
+                    'description' => $r->keterangan ?: 'Area pemantauan potensi kerawanan bencana BPBD.',
+                ];
+            })->values()->all();
+        } else {
+            $zonasiList = [
+                [
+                    'name' => 'Zona Merah Puncak - Cisarua & Megamendung',
+                    'type' => 'Tanah Longsor',
+                    'level' => 'MERAH',
+                    'color' => '#dc2626',
+                    'lat' => -6.6980,
+                    'lng' => 106.9320,
+                    'radius' => 2400,
+                    'description' => 'Kerentanan lereng curam tinggi, curah hujan ekstrem memicu pergerakan tanah.'
+                ],
+                [
+                    'name' => 'Zona Merah Bantaran Ciliwung - Bojonggede',
+                    'type' => 'Banjir Luapan',
+                    'level' => 'MERAH',
+                    'color' => '#dc2626',
+                    'lat' => -6.4939,
+                    'lng' => 106.7969,
+                    'radius' => 1900,
+                    'description' => 'Dataran rendah aliran sungai rawan limpasan air dan genangan permukiman.'
+                ],
+                [
+                    'name' => 'Zona Kuning Cibinong Kota',
+                    'type' => 'Genangan Air & Angin Kencang',
+                    'level' => 'KUNING',
+                    'color' => '#eab308',
+                    'lat' => -6.4855,
+                    'lng' => 106.8450,
+                    'radius' => 2100,
+                    'description' => 'Potensi genangan air 30-50 cm saat drainase meluap dan bahaya pohon tumbang.'
+                ],
+                [
+                    'name' => 'Zona Hijau Sentul Babakan Madang',
+                    'type' => 'Area Titik Kumpul Aman',
+                    'level' => 'HIJAU',
+                    'color' => '#16a34a',
+                    'lat' => -6.5650,
+                    'lng' => 106.8720,
+                    'radius' => 2000,
+                    'description' => 'Struktur tanah relatif stabil, lokasi evakuasi aman dan penyangga logistik.'
+                ],
+            ];
+        }
 
         // Titik Posko Evakuasi & Gudang Logistik
         $poskoList = [
@@ -232,9 +297,13 @@ class DashboardController extends Controller
             }
         }
 
-        $categories = KategoriStok::with('stokBantuan')->take(4)->get();
+        $categories = KategoriStok::with(['stokBantuan' => function ($q) use ($isKelurahanAdmin, $user) {
+            if ($isKelurahanAdmin) {
+                $q->where('id_kelurahan', $user->id_kelurahan);
+            }
+        }])->take(4)->get();
 
-        $logisticsStock = $categories->map(function ($cat) {
+        $logisticsStock = $categories->map(function ($cat) use ($isKelurahanAdmin) {
             $masuk = $cat->stokBantuan->where('tipe', 'MASUK')->sum('jumlah');
             $keluar = $cat->stokBantuan->where('tipe', 'KELUAR')->sum('jumlah');
             $saldo = max(0, $masuk - $keluar);
@@ -247,8 +316,8 @@ class DashboardController extends Controller
                 default => 1000,
             };
 
-            // Jika belum ada pencatatan di database, gunakan baseline awal operasional
-            if ($cat->stokBantuan->isEmpty()) {
+            // Jika BPBD pusat dan belum ada pencatatan di database, gunakan baseline awal operasional
+            if (!$isKelurahanAdmin && $cat->stokBantuan->isEmpty()) {
                 $saldo = match ($cat->nama_kategori) {
                     'Bahan Pangan' => 1420,
                     'Sandang & Pakaian' => 520,
@@ -296,11 +365,13 @@ class DashboardController extends Controller
             ];
         })->toArray();
 
-        // 4. Laporan Terbaru Masuk (Feeds 8 Aduan Terkini)
-        $recentReports = LaporanBencana::with(['bencana', 'kecamatan', 'kelurahan'])
-            ->latest('created_at')
-            ->take(8)
-            ->get();
+        // 4. Laporan Terbaru Masuk (Feeds 8 Aduan Terkini Ter-scope)
+        $recentQuery = LaporanBencana::with(['bencana', 'kecamatan', 'kelurahan'])
+            ->latest('created_at');
+        if ($isKelurahanAdmin) {
+            $recentQuery->where('id_kelurahan', $user->id_kelurahan);
+        }
+        $recentReports = $recentQuery->take(8)->get();
 
         $disasters = Bencana::orderBy('nama_bencana')->get();
         $districts = Kecamatan::orderBy('nama_kecamatan')->get();
@@ -323,7 +394,8 @@ class DashboardController extends Controller
             'districtImpact',
             'disasterShare',
             'logisticsStock',
-            'recentReports'
+            'recentReports',
+            'isKelurahanAdmin'
         ));
     }
 }

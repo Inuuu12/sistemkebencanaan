@@ -21,6 +21,28 @@
         </div>
     </div>
 
+    @if(!empty($isKelurahanAdmin) && Auth::user()->kelurahan)
+    <!-- Banner Mode Stok Kelurahan -->
+    <div class="p-4 rounded-2xl bg-orange-50 border border-orange-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#ea5921] text-white flex items-center justify-center text-lg font-bold shrink-0 shadow-sm shadow-orange-500/20">
+                📦
+            </div>
+            <div>
+                <h4 class="text-sm font-extrabold text-slate-900">
+                    Gudang Logistik: Kelurahan {{ Auth::user()->kelurahan->nama_kelurahan ?? '-' }} (Kec. {{ Auth::user()->kecamatan->nama_kecamatan ?? '-' }})
+                </h4>
+                <p class="text-xs text-slate-600 mt-0.5">
+                    Hanya menampilkan dan mencatat mutasi stok bantuan kedaruratan di wilayah kelurahan Anda.
+                </p>
+            </div>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-orange-100 text-[#ea5921] text-xs font-bold shrink-0">
+            Khusus Kelurahan
+        </span>
+    </div>
+    @endif
+
     <!-- Alert Notifikasi Flash Message -->
     @if(session('success'))
     <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between shadow-xs">
@@ -253,13 +275,23 @@
                                     <span class="font-semibold">{{ $stok->sumber }}</span>
                                 </div>
                             @endif
-                            @if($stok->tujuan)
+                            @if($stok->kelurahan || $stok->kecamatan)
+                                <div class="text-xs text-slate-800 flex items-center gap-1 mt-0.5">
+                                    <span class="text-[10px] font-bold uppercase text-orange-600">Gudang:</span>
+                                    <span class="font-semibold">Kel. {{ $stok->kelurahan->nama_kelurahan ?? '-' }}, Kec. {{ $stok->kecamatan->nama_kecamatan ?? '-' }}</span>
+                                </div>
+                            @elseif($stok->tujuan)
                                 <div class="text-xs text-slate-600 flex items-center gap-1 mt-0.5">
-                                    <span class="text-[10px] font-bold uppercase text-slate-400">Gudang/Tujuan:</span>
+                                    <span class="text-[10px] font-bold uppercase text-slate-400">Gudang:</span>
                                     <span>{{ $stok->tujuan }}</span>
                                 </div>
                             @endif
-                            @if(!$stok->sumber && !$stok->tujuan)
+                            @if($stok->tujuan && ($stok->kelurahan || $stok->kecamatan))
+                                <div class="text-[11px] text-slate-500 italic mt-0.5">
+                                    {{ $stok->tujuan }}
+                                </div>
+                            @endif
+                            @if(!$stok->sumber && !$stok->tujuan && !$stok->kelurahan)
                                 <span class="text-xs text-slate-400 italic">Pencatatan umum gudang</span>
                             @endif
                         </td>
@@ -288,6 +320,8 @@
                                             'satuan' => $stok->satuan,
                                             'tanggal' => $stok->tanggal ? \Carbon\Carbon::parse($stok->tanggal)->format('Y-m-d') : '',
                                             'sumber' => $stok->sumber,
+                                            'id_kecamatan' => $stok->id_kecamatan,
+                                            'id_kelurahan' => $stok->id_kelurahan,
                                             'tujuan' => $stok->tujuan,
                                             'keterangan' => $stok->keterangan,
                                         ]) }})"
@@ -422,25 +456,100 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <!-- Sumber / Donatur -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Sumber / Donatur Bantuan
-                    </label>
-                    <input type="text" name="sumber" placeholder="Contoh: BNPB Pusat, APBD Bogor, Kemensos, Donasi Warga" 
-                           class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+            <!-- Sumber / Donatur -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Sumber / Asal / Donatur Bantuan
+                </label>
+                <input type="text" name="sumber" placeholder="Contoh: BNPB Pusat, APBD Bogor, Kemensos, Donasi Warga" 
+                       class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+            </div>
+
+            <!-- Lokasi Gudang: Wajib Pilih Kecamatan lalu Kelurahan -->
+            @if(!empty($isKelurahanAdmin) && Auth::user()->kelurahan)
+            <div class="p-4 rounded-2xl bg-orange-50/80 border border-orange-200 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-lg bg-orange-100 text-[#ea5921] flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Lokasi Gudang Penyimpanan</span>
+                            <span class="text-[11px] text-slate-500">Terkunci otomatis pada wilayah kerja akun Anda</span>
+                        </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-[#ea5921]">Otomatis</span>
                 </div>
 
-                <!-- Lokasi Gudang / Tujuan -->
+                <div class="p-3 bg-white rounded-xl border border-orange-100">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Wilayah Kelurahan / Desa:</span>
+                    <span class="text-xs font-extrabold text-slate-900 block mt-0.5">
+                        Kel. {{ Auth::user()->kelurahan->nama_kelurahan ?? '-' }}, Kec. {{ Auth::user()->kecamatan->nama_kecamatan ?? '-' }}
+                    </span>
+                    <input type="hidden" name="id_kecamatan" value="{{ Auth::user()->id_kecamatan }}">
+                    <input type="hidden" name="id_kelurahan" value="{{ Auth::user()->id_kelurahan }}">
+                </div>
+
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Lokasi Gudang / Tujuan
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Nama Gudang / Nomor Rak / Alamat Spesifik <span class="text-slate-400 font-normal">(Opsional)</span>
                     </label>
-                    <input type="text" name="tujuan" placeholder="Contoh: Gudang Utama Cibinong - Rak A2" 
-                           class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                    <input type="text" name="tujuan" placeholder="Contoh: Gudang Kantor Kelurahan / Posko Balai Desa" 
+                           class="w-full px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
                 </div>
             </div>
+            @else
+            <div class="p-4 rounded-2xl bg-orange-50/60 border border-orange-100 space-y-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-lg bg-orange-100 text-[#ea5921] flex items-center justify-center shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Lokasi Gudang Penyimpanan</span>
+                        <span class="text-[11px] text-slate-500">Pilih kecamatan terlebih dahulu untuk memuat daftar kelurahan</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <!-- 1. Pilih Kecamatan Terlebih Dahulu -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            1. Kecamatan Gudang <span class="text-rose-600">*</span>
+                        </label>
+                        <select name="id_kecamatan" id="create_kecamatan" onchange="filterKelurahanDropdown('create')" required
+                                class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                            <option value="">-- Pilih Kecamatan Dulu --</option>
+                            @foreach($districts as $d)
+                                <option value="{{ $d->id_kecamatan }}">Kec. {{ $d->nama_kecamatan }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- 2. Pilih Kelurahan (Otomatis setelah Kecamatan dipilih) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            2. Kelurahan / Desa Gudang <span class="text-rose-600">*</span>
+                        </label>
+                        <select name="id_kelurahan" id="create_kelurahan" required
+                                class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                            <option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Detail Tambahan Nama Gudang / Rak (Opsional) -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Nama Gudang / Nomor Rak / Alamat Spesifik <span class="text-slate-400 font-normal">(Opsional)</span>
+                    </label>
+                    <input type="text" name="tujuan" placeholder="Contoh: Gudang Utama Logistik BPBD / Rak Sembako B1" 
+                           class="w-full px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                </div>
+            </div>
+            @endif
 
             <!-- Keterangan -->
             <div>
@@ -542,23 +651,99 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Sumber / Donatur Bantuan
-                    </label>
-                    <input type="text" id="edit_sumber" name="sumber" 
-                           class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Sumber / Asal / Donatur Bantuan
+                </label>
+                <input type="text" id="edit_sumber" name="sumber" 
+                       class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+            </div>
+
+            <!-- Lokasi Gudang: Wajib Pilih Kecamatan lalu Kelurahan -->
+            @if(!empty($isKelurahanAdmin) && Auth::user()->kelurahan)
+            <div class="p-4 rounded-2xl bg-orange-50/80 border border-orange-200 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-lg bg-orange-100 text-[#ea5921] flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Lokasi Gudang Penyimpanan</span>
+                            <span class="text-[11px] text-slate-500">Terkunci otomatis pada wilayah kerja akun Anda</span>
+                        </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-[#ea5921]">Otomatis</span>
+                </div>
+
+                <div class="p-3 bg-white rounded-xl border border-orange-100">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Wilayah Kelurahan / Desa:</span>
+                    <span class="text-xs font-extrabold text-slate-900 block mt-0.5">
+                        Kel. {{ Auth::user()->kelurahan->nama_kelurahan ?? '-' }}, Kec. {{ Auth::user()->kecamatan->nama_kecamatan ?? '-' }}
+                    </span>
+                    <input type="hidden" name="id_kecamatan" value="{{ Auth::user()->id_kecamatan }}">
+                    <input type="hidden" name="id_kelurahan" value="{{ Auth::user()->id_kelurahan }}">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Lokasi Gudang / Tujuan
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Nama Gudang / Nomor Rak / Alamat Spesifik <span class="text-slate-400 font-normal">(Opsional)</span>
                     </label>
-                    <input type="text" id="edit_tujuan" name="tujuan" 
-                           class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                    <input type="text" id="edit_tujuan" name="tujuan" placeholder="Contoh: Gudang Kantor Kelurahan / Posko Balai Desa" 
+                           class="w-full px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
                 </div>
             </div>
+            @else
+            <div class="p-4 rounded-2xl bg-orange-50/60 border border-orange-100 space-y-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-lg bg-orange-100 text-[#ea5921] flex items-center justify-center shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Lokasi Gudang Penyimpanan</span>
+                        <span class="text-[11px] text-slate-500">Pilih kecamatan terlebih dahulu untuk memuat daftar kelurahan</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <!-- 1. Pilih Kecamatan Terlebih Dahulu -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            1. Kecamatan Gudang <span class="text-rose-600">*</span>
+                        </label>
+                        <select name="id_kecamatan" id="edit_kecamatan" onchange="filterKelurahanDropdown('edit')" required
+                                class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                            <option value="">-- Pilih Kecamatan Dulu --</option>
+                            @foreach($districts as $d)
+                                <option value="{{ $d->id_kecamatan }}">Kec. {{ $d->nama_kecamatan }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- 2. Pilih Kelurahan (Otomatis setelah Kecamatan dipilih) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            2. Kelurahan / Desa Gudang <span class="text-rose-600">*</span>
+                        </label>
+                        <select name="id_kelurahan" id="edit_kelurahan" required
+                                class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                            <option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Detail Tambahan Nama Gudang / Rak (Opsional) -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Nama Gudang / Nomor Rak / Alamat Spesifik <span class="text-slate-400 font-normal">(Opsional)</span>
+                    </label>
+                    <input type="text" id="edit_tujuan" name="tujuan" placeholder="Contoh: Gudang Utama Logistik BPBD / Rak Sembako B1" 
+                           class="w-full px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                </div>
+            </div>
+            @endif
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
@@ -616,9 +801,47 @@
 
 @push('scripts')
 <script>
+    const districtsData = {!! json_encode($districts ?? []) !!};
+
+    function filterKelurahanDropdown(prefix, selectedKelurahanId = null) {
+        const kecSelect = document.getElementById(`${prefix}_kecamatan`);
+        const kelSelect = document.getElementById(`${prefix}_kelurahan`);
+        if (!kecSelect || !kelSelect) return;
+
+        const kecId = kecSelect.value;
+        kelSelect.innerHTML = '<option value="">-- Pilih Kelurahan / Desa --</option>';
+
+        if (!kecId) {
+            kelSelect.innerHTML = '<option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>';
+            return;
+        }
+
+        const district = districtsData.find(d => d.id_kecamatan == kecId);
+        if (district && district.kelurahan && district.kelurahan.length > 0) {
+            district.kelurahan.forEach(kel => {
+                const opt = document.createElement('option');
+                opt.value = kel.id_kelurahan;
+                opt.textContent = kel.nama_kelurahan;
+                if (selectedKelurahanId && kel.id_kelurahan == selectedKelurahanId) {
+                    opt.selected = true;
+                }
+                kelSelect.appendChild(opt);
+            });
+        } else {
+            kelSelect.innerHTML = '<option value="">(Belum ada data kelurahan)</option>';
+        }
+    }
+
     function openCreateModal() {
         document.getElementById('modal-create').classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
+        
+        const kecSelect = document.getElementById('create_kecamatan');
+        if (kecSelect) {
+            kecSelect.value = '';
+            filterKelurahanDropdown('create');
+        }
+
         setTimeout(() => {
             const input = document.getElementById('create_nama_item');
             if (input) input.focus();
@@ -641,8 +864,20 @@
         document.getElementById('edit_satuan').value = data.satuan || '';
         document.getElementById('edit_tanggal').value = data.tanggal || '';
         document.getElementById('edit_sumber').value = data.sumber || '';
+        
+        // Set Kecamatan & Kelurahan
+        const kecSelect = document.getElementById('edit_kecamatan');
+        if (kecSelect) {
+            kecSelect.value = data.id_kecamatan || '';
+            filterKelurahanDropdown('edit', data.id_kelurahan);
+        }
+
         document.getElementById('edit_tujuan').value = data.tujuan || '';
         document.getElementById('edit_keterangan').value = data.keterangan || '';
+
+        document.getElementById('modal-edit').classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
 
         document.getElementById('modal-edit').classList.remove('hidden');
         document.body.classList.add('overflow-hidden');

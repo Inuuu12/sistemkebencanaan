@@ -6,7 +6,7 @@
     <title>@yield('title', 'Admin Panel') - AKSARA BOGOR</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('images/aksara-logo-32.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logobpbd.png') }}">
 
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

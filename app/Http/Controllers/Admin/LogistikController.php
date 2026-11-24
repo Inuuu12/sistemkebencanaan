@@ -19,6 +19,10 @@ class LogistikController extends Controller
      */
     public function stokBantuan(Request $request)
     {
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+        $isKecamatanAdmin = $user && in_array($user->role, ['ADMIN_KECAMATAN', 'KECAMATAN']) && $user->id_kecamatan;
+
         // Pastikan ada kategori dasar jika tabel kategori masih kosong
         if (KategoriStok::count() === 0) {
             $defaultKategori = [
@@ -34,8 +38,21 @@ class LogistikController extends Controller
             }
         }
 
-        $query = StokBantuan::with(['kategoriStok', 'recorder'])
+        $query = StokBantuan::with(['kategoriStok', 'recorder', 'kecamatan', 'kelurahan'])
             ->latest('tanggal');
+
+        // Scoping wilayah: Admin Kelurahan HANYA melihat stok di wilayah kelurahannya
+        if ($isKelurahanAdmin) {
+            $query->where('id_kelurahan', $user->id_kelurahan);
+        } elseif ($isKecamatanAdmin) {
+            $query->where('id_kecamatan', $user->id_kecamatan);
+        } elseif ($request->filled('kecamatan_id')) {
+            $query->where('id_kecamatan', $request->kecamatan_id);
+        }
+
+        if (!$isKelurahanAdmin && $request->filled('kelurahan_id')) {
+            $query->where('id_kelurahan', $request->kelurahan_id);
+        }
 
         // Pencarian teks
         if ($request->filled('q')) {
@@ -44,7 +61,13 @@ class LogistikController extends Controller
                 $sub->where('nama_item', 'like', "%{$q}%")
                     ->orWhere('sumber', 'like', "%{$q}%")
                     ->orWhere('tujuan', 'like', "%{$q}%")
-                    ->orWhere('keterangan', 'like', "%{$q}%");
+                    ->orWhere('keterangan', 'like', "%{$q}%")
+                    ->orWhereHas('kecamatan', function ($k) use ($q) {
+                        $k->where('nama_kecamatan', 'like', "%{$q}%");
+                    })
+                    ->orWhereHas('kelurahan', function ($kl) use ($q) {
+                        $kl->where('nama_kelurahan', 'like', "%{$q}%");
+                    });
             });
         }
 
@@ -60,14 +83,27 @@ class LogistikController extends Controller
 
         $stokList = $query->paginate(10)->withQueryString();
 
-        // Metrik Statistik
-        $totalItem = StokBantuan::count();
-        $totalMasuk = StokBantuan::where('tipe', 'MASUK')->sum('jumlah');
-        $totalKeluar = StokBantuan::where('tipe', 'KELUAR')->sum('jumlah');
+        // Metrik Statistik Ter-scope
+        $baseStok = StokBantuan::query();
+        $baseDistribusi = DistribusiBantuan::query();
+        if ($isKelurahanAdmin) {
+            $baseStok->where('id_kelurahan', $user->id_kelurahan);
+            $baseDistribusi->where('id_kelurahan', $user->id_kelurahan);
+        } elseif ($isKecamatanAdmin) {
+            $baseStok->where('id_kecamatan', $user->id_kecamatan);
+            $baseDistribusi->whereHas('kelurahan', function ($k) use ($user) {
+                $k->where('id_kecamatan', $user->id_kecamatan);
+            });
+        }
+
+        $totalItem = (clone $baseStok)->count();
+        $totalMasuk = (clone $baseStok)->where('tipe', 'MASUK')->sum('jumlah');
+        $totalKeluar = (clone $baseStok)->where('tipe', 'KELUAR')->sum('jumlah');
         $totalKategori = KategoriStok::count();
-        $totalTersalur = DistribusiBantuan::sum('jumlah');
+        $totalTersalur = (clone $baseDistribusi)->sum('jumlah');
 
         $kategoriList = KategoriStok::orderBy('nama_kategori')->get();
+        $districts = Kecamatan::with('kelurahan')->orderBy('nama_kecamatan')->get();
 
         return view('admin.logistik.stok', compact(
             'stokList',
@@ -76,12 +112,17 @@ class LogistikController extends Controller
             'totalKeluar',
             'totalKategori',
             'totalTersalur',
-            'kategoriList'
+            'kategoriList',
+            'districts',
+            'isKelurahanAdmin'
         ));
     }
 
     public function storeStokBantuan(Request $request)
     {
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
         $validated = $request->validate([
             'nama_item' => 'required|string|max:150',
             'id_kategori' => 'required|exists:app_md_kategori_stok,id_kategori',
@@ -90,6 +131,8 @@ class LogistikController extends Controller
             'satuan' => 'required|string|max:50',
             'tanggal' => 'required|date',
             'sumber' => 'nullable|string|max:150',
+            'id_kecamatan' => 'nullable|exists:app_md_kecamatan,id_kecamatan',
+            'id_kelurahan' => 'nullable|exists:app_md_kelurahan,id_kelurahan',
             'tujuan' => 'nullable|string|max:150',
             'keterangan' => 'nullable|string|max:1000',
         ], [
@@ -97,6 +140,20 @@ class LogistikController extends Controller
             'id_kategori.required' => 'Pilih kategori logistik bantuan.',
             'jumlah.min' => 'Jumlah barang minimal 1.',
         ]);
+
+        // Otomatis kunci wilayah jika login sebagai admin kelurahan
+        if ($isKelurahanAdmin) {
+            $validated['id_kelurahan'] = $user->id_kelurahan;
+            $validated['id_kecamatan'] = $user->id_kecamatan;
+            if (empty($validated['tujuan'])) {
+                $validated['tujuan'] = 'Gudang Posko Kel. ' . ($user->kelurahan->nama_kelurahan ?? '') . ', Kec. ' . ($user->kecamatan->nama_kecamatan ?? '');
+            }
+        } elseif ($request->filled('id_kelurahan') && empty($validated['tujuan'])) {
+            $kel = Kelurahan::with('kecamatan')->find($request->id_kelurahan);
+            if ($kel) {
+                $validated['tujuan'] = 'Gudang/Posko Kel. ' . $kel->nama_kelurahan . ', Kec. ' . ($kel->kecamatan?->nama_kecamatan ?? '');
+            }
+        }
 
         $validated['dicatat_oleh'] = Auth::id();
 
@@ -109,6 +166,13 @@ class LogistikController extends Controller
     public function updateStokBantuan(Request $request, $id)
     {
         $stok = StokBantuan::findOrFail($id);
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
+        // Keamanan: larang mengubah data stok kelurahan lain
+        if ($isKelurahanAdmin && $stok->id_kelurahan != $user->id_kelurahan) {
+            return back()->with('error', 'Akses ditolak: Anda hanya dapat memperbarui data stok kelurahan Anda.');
+        }
 
         $validated = $request->validate([
             'nama_item' => 'required|string|max:150',
@@ -118,9 +182,21 @@ class LogistikController extends Controller
             'satuan' => 'required|string|max:50',
             'tanggal' => 'required|date',
             'sumber' => 'nullable|string|max:150',
+            'id_kecamatan' => 'nullable|exists:app_md_kecamatan,id_kecamatan',
+            'id_kelurahan' => 'nullable|exists:app_md_kelurahan,id_kelurahan',
             'tujuan' => 'nullable|string|max:150',
             'keterangan' => 'nullable|string|max:1000',
         ]);
+
+        if ($isKelurahanAdmin) {
+            $validated['id_kelurahan'] = $user->id_kelurahan;
+            $validated['id_kecamatan'] = $user->id_kecamatan;
+        } elseif ($request->filled('id_kelurahan') && empty($validated['tujuan'])) {
+            $kel = Kelurahan::with('kecamatan')->find($request->id_kelurahan);
+            if ($kel) {
+                $validated['tujuan'] = 'Gudang/Posko Kel. ' . $kel->nama_kelurahan . ', Kec. ' . ($kel->kecamatan?->nama_kecamatan ?? '');
+            }
+        }
 
         $stok->update($validated);
 
@@ -131,6 +207,12 @@ class LogistikController extends Controller
     public function destroyStokBantuan($id)
     {
         $stok = StokBantuan::withCount('distribusiBantuan')->findOrFail($id);
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
+        if ($isKelurahanAdmin && $stok->id_kelurahan != $user->id_kelurahan) {
+            return back()->with('error', 'Akses ditolak: Anda hanya dapat menghapus data stok kelurahan Anda.');
+        }
 
         if ($stok->distribusi_bantuan_count > 0) {
             return redirect()->route('admin.logistik.stok')
@@ -149,8 +231,15 @@ class LogistikController extends Controller
      */
     public function distribusiBantuan(Request $request)
     {
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
         $query = DistribusiBantuan::with(['laporanBencana.bencana', 'laporanBencana.kecamatan', 'kelurahan.kecamatan', 'stokBantuan.kategoriStok', 'sender'])
             ->latest('tanggal_kirim');
+
+        if ($isKelurahanAdmin) {
+            $query->where('id_kelurahan', $user->id_kelurahan);
+        }
 
         // Pencarian teks
         if ($request->filled('q')) {
@@ -179,8 +268,8 @@ class LogistikController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Filter Kecamatan
-        if ($request->filled('kecamatan_id')) {
+        // Filter Kecamatan (untuk admin tingkat pusat)
+        if (!$isKelurahanAdmin && $request->filled('kecamatan_id')) {
             $kecId = $request->kecamatan_id;
             $query->where(function ($q) use ($kecId) {
                 $q->whereHas('kelurahan', function ($k) use ($kecId) {
@@ -193,17 +282,34 @@ class LogistikController extends Controller
 
         $distribusiList = $query->paginate(10)->withQueryString();
 
-        // Metrik Distribusi
-        $totalDistribusi = DistribusiBantuan::count();
-        $totalTerkirim = DistribusiBantuan::where('status', 'Selesai')->count();
-        $totalProses = DistribusiBantuan::where('status', 'Proses Kirim')->count();
-        $totalTiba = DistribusiBantuan::where('status', 'Tiba di Lokasi')->count();
-        $totalUnitKirim = DistribusiBantuan::sum('jumlah');
+        // Metrik Distribusi Ter-scope
+        $baseDist = DistribusiBantuan::query();
+        if ($isKelurahanAdmin) {
+            $baseDist->where('id_kelurahan', $user->id_kelurahan);
+        }
 
-        $laporanList = LaporanBencana::with('bencana')->latest('id_laporan')->take(30)->get();
+        $totalDistribusi = (clone $baseDist)->count();
+        $totalTerkirim = (clone $baseDist)->where('status', 'Selesai')->count();
+        $totalProses = (clone $baseDist)->where('status', 'Proses Kirim')->count();
+        $totalTiba = (clone $baseDist)->where('status', 'Tiba di Lokasi')->count();
+        $totalUnitKirim = (clone $baseDist)->sum('jumlah');
+
+        $laporanQuery = LaporanBencana::with('bencana')->latest('id_laporan');
+        if ($isKelurahanAdmin) {
+            $laporanQuery->where('id_kelurahan', $user->id_kelurahan);
+        }
+        $laporanList = $laporanQuery->take(30)->get();
+
         $kecamatanList = Kecamatan::orderBy('nama_kecamatan')->get();
         $kelurahanList = Kelurahan::orderBy('nama_kelurahan')->get();
-        $stokList = StokBantuan::orderBy('nama_item')->get();
+
+        $stokQuery = StokBantuan::orderBy('nama_item');
+        if ($isKelurahanAdmin) {
+            $stokQuery->where('id_kelurahan', $user->id_kelurahan);
+        }
+        $stokList = $stokQuery->get();
+
+        $districts = Kecamatan::with('kelurahan')->orderBy('nama_kecamatan')->get();
 
         return view('admin.logistik.distribusi', compact(
             'distribusiList',
@@ -215,15 +321,20 @@ class LogistikController extends Controller
             'laporanList',
             'kecamatanList',
             'kelurahanList',
-            'stokList'
+            'stokList',
+            'districts',
+            'isKelurahanAdmin'
         ));
     }
 
     public function storeDistribusiBantuan(Request $request)
     {
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
         $validated = $request->validate([
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kelurahan' => 'nullable|exists:app_kelurahan,id_kelurahan',
+            'id_kelurahan' => 'nullable|exists:app_md_kelurahan,id_kelurahan',
             'id_stok' => 'nullable|exists:app_stok_bantuan,id_stok',
             'jumlah' => 'required|integer|min:1',
             'satuan' => 'required|string|max:50',
@@ -237,6 +348,10 @@ class LogistikController extends Controller
             'jumlah.min' => 'Jumlah barang distribusi minimal 1.',
         ]);
 
+        if ($isKelurahanAdmin) {
+            $validated['id_kelurahan'] = $user->id_kelurahan;
+        }
+
         $validated['dikirim_oleh'] = Auth::id();
 
         DistribusiBantuan::create($validated);
@@ -248,10 +363,16 @@ class LogistikController extends Controller
     public function updateDistribusiBantuan(Request $request, $id)
     {
         $distribusi = DistribusiBantuan::findOrFail($id);
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
+        if ($isKelurahanAdmin && $distribusi->id_kelurahan != $user->id_kelurahan) {
+            return back()->with('error', 'Akses ditolak: Anda hanya dapat memperbarui data distribusi kelurahan Anda.');
+        }
 
         $validated = $request->validate([
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kelurahan' => 'nullable|exists:app_kelurahan,id_kelurahan',
+            'id_kelurahan' => 'nullable|exists:app_md_kelurahan,id_kelurahan',
             'id_stok' => 'nullable|exists:app_stok_bantuan,id_stok',
             'jumlah' => 'required|integer|min:1',
             'satuan' => 'required|string|max:50',
@@ -262,6 +383,10 @@ class LogistikController extends Controller
             'keterangan' => 'nullable|string|max:1000',
         ]);
 
+        if ($isKelurahanAdmin) {
+            $validated['id_kelurahan'] = $user->id_kelurahan;
+        }
+
         $distribusi->update($validated);
 
         return redirect()->route('admin.logistik.distribusi')
@@ -271,6 +396,13 @@ class LogistikController extends Controller
     public function destroyDistribusiBantuan($id)
     {
         $distribusi = DistribusiBantuan::findOrFail($id);
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
+        if ($isKelurahanAdmin && $distribusi->id_kelurahan != $user->id_kelurahan) {
+            return back()->with('error', 'Akses ditolak: Anda hanya dapat menghapus data distribusi kelurahan Anda.');
+        }
+
         $distribusi->delete();
 
         return redirect()->route('admin.logistik.distribusi')

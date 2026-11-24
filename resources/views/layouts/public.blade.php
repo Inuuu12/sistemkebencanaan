@@ -8,8 +8,8 @@
     <meta name="description" content="@yield('meta_description', 'Portal Resmi Pemantauan dan Tanggap Darurat Bencana Alam Kabupaten Bogor. PUSDAOPS PB BPBD Kabupaten Bogor.')">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('images/aksara-logo-32.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/aksara-logo-192.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logobpbd.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logobpbd.png') }}">
 
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -121,7 +121,7 @@
                 <!-- Logo & Branding -->
                 <a href="{{ route('public.home') }}" class="flex shrink-0 items-center gap-2.5 sm:gap-3 group">
                     <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-                        <img src="{{ asset('images/aksara-logo.png') }}" alt="AKSARA BOGOR" class="w-full h-full object-contain drop-shadow-sm">
+                        <img src="{{ asset('images/logobpbd.png') }}" alt="AKSARA BOGOR" class="w-full h-full object-contain drop-shadow-sm">
                     </div>
                     <div class="flex flex-col justify-center">
                         <span class="font-black text-sm sm:text-lg tracking-tight text-white leading-tight whitespace-nowrap flex items-center gap-1.5">
@@ -152,6 +152,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                         </svg>
                     </button>
+                    <!-- Kejadian Bencana Link -->
+                    <a href="{{ route('public.kejadian') }}" 
+                        class="inline-flex h-8 sm:h-10 items-center justify-center gap-1.5 rounded-xl border border-white/30 bg-white/15 hover:bg-white/25 text-white shadow-sm transition-colors px-2.5 sm:px-3 text-xs font-bold shrink-0 {{ Route::is('public.kejadian*') ? 'bg-white text-[#ea5921] border-white' : '' }}">
+                        <span>Kejadian</span>
+                    </a>
+
                     <!-- Berita Link -->
                     <a href="{{ route('public.news') }}" 
                         class="inline-flex h-8 sm:h-10 items-center justify-center gap-1.5 rounded-xl border border-white/30 bg-white/15 hover:bg-white/25 text-white shadow-sm transition-colors px-2.5 sm:px-3 text-xs font-bold shrink-0 {{ Route::is('public.news*') ? 'bg-white text-[#ea5921] border-white' : '' }}">
@@ -206,7 +212,7 @@
         <footer class="border-t border-slate-200 dark:border-slate-800 mt-20 py-10 bg-white/60 dark:bg-slate-950/60 backdrop-blur-md">
             <div class="container mx-auto px-6 text-center text-sm text-slate-500 dark:text-slate-400">
                 <div class="flex items-center justify-center gap-2 mb-3">
-                    <img src="{{ asset('images/aksara-logo.png') }}" alt="Logo" class="w-7 h-7 object-contain">
+                    <img src="{{ asset('images/logobpbd.png') }}" alt="Logo" class="w-7 h-7 object-contain">
                     <span class="font-extrabold text-slate-800 dark:text-white">AKSARA BOGOR</span>
                 </div>
                 <p>&copy; {{ date('Y') }} Sistem Informasi Kebencanaan Kabupaten Bogor.</p>

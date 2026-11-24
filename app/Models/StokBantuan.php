@@ -19,6 +19,8 @@ class StokBantuan extends Model
         'satuan',
         'tanggal',
         'sumber',
+        'id_kecamatan',
+        'id_kelurahan',
         'tujuan',
         'keterangan',
         'dicatat_oleh',
@@ -28,6 +30,16 @@ class StokBantuan extends Model
         'jumlah' => 'integer',
         'tanggal' => 'date',
     ];
+
+    public function kecamatan(): BelongsTo
+    {
+        return $this->belongsTo(Kecamatan::class, 'id_kecamatan', 'id_kecamatan');
+    }
+
+    public function kelurahan(): BelongsTo
+    {
+        return $this->belongsTo(Kelurahan::class, 'id_kelurahan', 'id_kelurahan');
+    }
 
     public function kategoriStok(): BelongsTo
     {

@@ -39,6 +39,8 @@ class LaporanBencana extends Model
         'foto_laporan',
         'kebutuhan_logistik',
         'status',
+        'diteruskan_ke',
+        'catatan_kelurahan',
     ];
 
     protected $casts = [

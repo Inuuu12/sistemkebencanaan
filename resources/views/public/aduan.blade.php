@@ -180,9 +180,9 @@
 
                 <div>
                     <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                        Desa / Kelurahan
+                        Desa / Kelurahan <span class="text-red-500">*</span>
                     </label>
-                    <select name="id_kelurahan" id="aduan-kelurahan"
+                    <select name="id_kelurahan" id="aduan-kelurahan" required
                         class="w-full text-xs font-medium px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:bg-white dark:focus:bg-slate-900 focus:outline-none">
                         <option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>
                     </select>
@@ -221,24 +221,34 @@
                         <span class="text-xs font-black text-cyan-900 dark:text-cyan-300 block">Koordinat Titik Lokasi Bencana (GPS)</span>
                         <p class="text-[11px] text-cyan-700 dark:text-cyan-400">Gunakan GPS ponsel/laptop Anda untuk akurasi peta pemantauan BPBD</p>
                     </div>
-                    <button type="button" onclick="detectGPS()" 
+                    <button type="button" id="btn-detect-gps" onclick="detectGPS()"
                         class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-black text-xs inline-flex items-center gap-1.5 shrink-0 shadow-sm transition-all active:scale-95">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
-                        <span>Deteksi Lokasi GPS Saya</span>
+                        <span id="btn-gps-text">Deteksi Lokasi GPS Saya</span>
                     </button>
                 </div>
+
+                {{-- Badge status GPS --}}
+                <div id="gps-status-bar" class="mt-3 hidden"></div>
+
                 <div class="grid grid-cols-2 gap-3 mt-3">
                     <div>
                         <label class="text-[10px] text-cyan-800 dark:text-cyan-400 uppercase font-bold block mb-1">Latitude</label>
-                        <input type="text" id="gps-lat" name="latitude" value="{{ old('latitude', '-6.4855') }}" readonly
-                            class="w-full text-xs font-mono font-bold px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-cyan-300 dark:border-cyan-800 text-slate-800 dark:text-slate-100">
+                        <input type="text" id="gps-lat" name="latitude" value="{{ old('latitude') }}" readonly placeholder="Belum terdeteksi"
+                            class="w-full text-xs font-mono font-bold px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-cyan-300 dark:border-cyan-800 text-slate-800 dark:text-slate-100 placeholder-slate-400">
                     </div>
                     <div>
                         <label class="text-[10px] text-cyan-800 dark:text-cyan-400 uppercase font-bold block mb-1">Longitude</label>
-                        <input type="text" id="gps-lng" name="longitude" value="{{ old('longitude', '106.8450') }}" readonly
-                            class="w-full text-xs font-mono font-bold px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-cyan-300 dark:border-cyan-800 text-slate-800 dark:text-slate-100">
+                        <input type="text" id="gps-lng" name="longitude" value="{{ old('longitude') }}" readonly placeholder="Belum terdeteksi"
+                            class="w-full text-xs font-mono font-bold px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-cyan-300 dark:border-cyan-800 text-slate-800 dark:text-slate-100 placeholder-slate-400">
                     </div>
                 </div>
+
+                {{-- Peringatan jika GPS belum diisi --}}
+                <p id="gps-warning" class="hidden mt-2 text-[11px] text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    GPS belum terdeteksi. Titik lokasi di peta BPBD tidak akan akurat. Disarankan klik tombol di atas sebelum mengirim.
+                </p>
             </div>
         </div>
 
@@ -392,7 +402,7 @@
 
 @push('scripts')
 <script>
-    function loadAduanKelurahan(kecamatanId) {
+    function loadAduanKelurahan(kecamatanId, selectedKelurahan = null) {
         const select = document.getElementById('aduan-kelurahan');
         select.innerHTML = '<option value="">Memuat data kelurahan...</option>';
 
@@ -406,27 +416,49 @@
             .then(data => {
                 select.innerHTML = '<option value="">-- Pilih Desa / Kelurahan --</option>';
                 data.forEach(item => {
-                    select.innerHTML += `<option value="${item.id_kelurahan}">${item.nama_kelurahan}</option>`;
+                    const isSelected = selectedKelurahan && item.id_kelurahan == selectedKelurahan ? 'selected' : '';
+                    select.innerHTML += `<option value="${item.id_kelurahan}" ${isSelected}>${item.nama_kelurahan}</option>`;
                 });
             })
             .catch(() => {
-                select.innerHTML = '<option value="">Gagal memuat desa/kelurahan</option>';
+                select.innerHTML = '<option value="">Gagal memuat desa/kelurahan. Coba muat ulang halaman.</option>';
             });
     }
 
     function detectGPS() {
         if (!navigator.geolocation) {
-            alert('Perangkat Anda tidak mendukung fitur lokasi GPS.');
+            setGpsStatus('error', 'Perangkat Anda tidak mendukung fitur lokasi GPS.');
             return;
         }
+
+        const btn = document.getElementById('btn-detect-gps');
+        const btnText = document.getElementById('btn-gps-text');
+        btn.disabled = true;
+        btnText.innerText = 'Mendeteksi...';
 
         navigator.geolocation.getCurrentPosition(function(pos) {
             document.getElementById('gps-lat').value = pos.coords.latitude.toFixed(7);
             document.getElementById('gps-lng').value = pos.coords.longitude.toFixed(7);
-            alert('Titik GPS berhasil terdeteksi: ' + pos.coords.latitude.toFixed(5) + ', ' + pos.coords.longitude.toFixed(5));
+            document.getElementById('gps-warning').classList.add('hidden');
+            setGpsStatus('success', '✓ GPS terdeteksi: ' + pos.coords.latitude.toFixed(5) + ', ' + pos.coords.longitude.toFixed(5) + ' (akurasi ±' + Math.round(pos.coords.accuracy) + 'm)');
+            btn.disabled = false;
+            btnText.innerText = 'Perbarui Lokasi GPS';
         }, function(err) {
-            alert('Gagal mendeteksi lokasi GPS. Pastikan izin lokasi aktif di browser Anda.');
-        }, { enableHighAccuracy: true });
+            setGpsStatus('error', 'Gagal mendeteksi GPS. Pastikan izin lokasi aktif di browser, lalu coba lagi.');
+            btn.disabled = false;
+            btnText.innerText = 'Deteksi Lokasi GPS Saya';
+        }, { enableHighAccuracy: true, timeout: 10000 });
+    }
+
+    function setGpsStatus(type, message) {
+        const bar = document.getElementById('gps-status-bar');
+        bar.classList.remove('hidden');
+        if (type === 'success') {
+            bar.className = 'mt-3 p-2.5 rounded-xl text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300';
+        } else {
+            bar.className = 'mt-3 p-2.5 rounded-xl text-[11px] font-semibold bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300';
+        }
+        bar.innerText = message;
     }
 
     function previewPhoto(event) {
@@ -667,6 +699,23 @@
 
     // Intersep submit form untuk validasi OTP
     document.addEventListener('DOMContentLoaded', function() {
+        // Auto-restore kelurahan dropdown saat halaman reload akibat validasi gagal
+        @if(old('id_kecamatan'))
+        const oldKecamatan = '{{ old('id_kecamatan') }}';
+        const oldKelurahan = '{{ old('id_kelurahan') }}';
+        if (oldKecamatan) {
+            document.getElementById('aduan-kecamatan').value = oldKecamatan;
+            loadAduanKelurahan(oldKecamatan, oldKelurahan);
+        }
+        @endif
+
+        // Tampilkan peringatan jika GPS belum diisi (dari old() atau kosong)
+        const latVal = document.getElementById('gps-lat').value;
+        const lngVal = document.getElementById('gps-lng').value;
+        if (!latVal || !lngVal) {
+            document.getElementById('gps-warning').classList.remove('hidden');
+        }
+
         const form = document.getElementById('form-lapor-aduan');
         if (form) {
             form.addEventListener('submit', function(e) {
@@ -680,6 +729,15 @@
                     document.getElementById('otp-section').classList.remove('hidden');
                     showOtpStatus('<strong>Perhatian:</strong> Email pelapor wajib diverifikasi dengan kode OTP sebelum mengirimkan laporan bencana. Silakan klik <strong>Kirim Kode OTP</strong>.', false, true);
                     container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+
+                // Peringatan GPS kosong saat submit — tidak blokir, hanya tampilkan warning
+                const lat = document.getElementById('gps-lat').value;
+                const lng = document.getElementById('gps-lng').value;
+                if (!lat || !lng) {
+                    document.getElementById('gps-warning').classList.remove('hidden');
+                    // Tidak preventDefault — laporan tetap bisa dikirim tanpa GPS
                 }
             });
         }

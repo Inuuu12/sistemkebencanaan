@@ -7,7 +7,7 @@
         <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-lg bg-orange-50 border border-orange-200/80 p-1 flex items-center justify-center shrink-0">
-                    <img src="{{ asset('images/aksara-logo.png') }}" alt="Logo AKSARA" class="w-full h-full object-contain">
+                    <img src="{{ asset('images/logobpbd.png') }}" alt="Logo AKSARA" class="w-full h-full object-contain">
                 </div>
                 <div>
                     <span class="font-extrabold text-sm text-slate-900 tracking-tight block leading-none">AKSARA BOGOR</span>
@@ -36,10 +36,16 @@
             </a>
 
             @php
-                $pendingCount = \App\Models\LaporanBencana::where('status', 'Pending')->count();
+                $currentUser = Auth::user();
+                $isKelAdmin = $currentUser && in_array($currentUser->role, ['ADMIN_KELURAHAN', 'KELURAHAN']);
+                $pendingQuery = \App\Models\LaporanBencana::where('status', 'Pending');
+                if ($isKelAdmin && $currentUser->id_kelurahan) {
+                    $pendingQuery->where('id_kelurahan', $currentUser->id_kelurahan);
+                }
+                $pendingCount = $pendingQuery->count();
                 $isLaporanActive = request()->routeIs('admin.laporan.*') || request()->routeIs('admin.korban.*') || request()->routeIs('admin.pengungsian.*') || request()->routeIs('admin.kerusakan.*') || request()->has('status');
                 $isLogistikActive = request()->routeIs('admin.logistik.*');
-                $isWilayahActive = request()->routeIs('admin.bencana.*');
+                $isWilayahActive = request()->routeIs('admin.kelurahan.*') || request()->routeIs('admin.kecamatan.*') || request()->routeIs('admin.bencana.*') || request()->routeIs('admin.rawan.*');
             @endphp
 
             <!-- Menu dengan Submenu 1: Laporan Bencana -->
@@ -134,33 +140,35 @@
                 </div>
             </div>
 
-            <!-- Menu dengan Submenu 3: Data Wilayah -->
+            @if(!$isKelAdmin)
+            <!-- Menu dengan Submenu 3: Data Wilayah / GIS (Khusus BPBD Pusat) -->
             <div>
                 <button type="button" onclick="toggleSubmenu('submenu-wilayah', 'arrow-wilayah')" 
-                    class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-50 group">
+                    class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ $isWilayahActive ? 'bg-orange-50/60 text-[#ea5921] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }} group">
                     <div class="flex items-center gap-3">
-                        <svg class="w-4 h-4 shrink-0 text-slate-500 group-hover:text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 shrink-0 {{ $isWilayahActive ? 'text-[#ea5921]' : 'text-slate-500 group-hover:text-slate-700' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
                         <span>GIS dan Layer Peta</span>
                     </div>
-                    <svg id="arrow-wilayah" class="w-4 h-4 text-slate-400 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg id="arrow-wilayah" class="w-4 h-4 text-slate-400 transition-transform duration-300 ease-in-out {{ $isWilayahActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
 
                 <!-- Submenu Animasi -->
-                <div id="submenu-wilayah" class="submenu-collapse overflow-hidden transition-all duration-300 ease-in-out" style="max-height: 0px;">
+                <div id="submenu-wilayah" class="submenu-collapse overflow-hidden transition-all duration-300 ease-in-out" 
+                     style="{{ $isWilayahActive ? '' : 'max-height: 0px;' }}">
                     <ul class="pl-8 pr-2 py-1 space-y-1 border-l-2 border-slate-100 ml-4 my-1">
                         <li>
-                            <a href="#" class="block py-1.5 px-3 rounded-lg text-xs font-medium text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50 transition-colors">
-                                 Kelurahan
+                            <a href="{{ route('admin.kelurahan.index') }}" class="block py-1.5 px-3 rounded-lg text-xs font-medium {{ request()->routeIs('admin.kelurahan.*') ? 'text-[#ea5921] bg-orange-50 font-bold' : 'text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50' }} transition-colors">
+                                Kelurahan
                             </a>
                         </li>
                         <li>
-                            <a href="#" class="block py-1.5 px-3 rounded-lg text-xs font-medium text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50 transition-colors">
-                               Kecamatan
+                            <a href="{{ route('admin.kecamatan.index') }}" class="block py-1.5 px-3 rounded-lg text-xs font-medium {{ request()->routeIs('admin.kecamatan.*') ? 'text-[#ea5921] bg-orange-50 font-bold' : 'text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50' }} transition-colors">
+                                Kecamatan
                             </a>
                         </li>
                         <li>
@@ -169,13 +177,14 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#" class="block py-1.5 px-3 rounded-lg text-xs font-medium text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50 transition-colors">
+                            <a href="{{ route('admin.rawan.index') }}" class="block py-1.5 px-3 rounded-lg text-xs font-medium {{ request()->routeIs('admin.rawan.*') ? 'text-[#ea5921] bg-orange-50 font-bold' : 'text-slate-600 hover:text-[#ea5921] hover:bg-orange-50/50' }} transition-colors">
                                 Titik Rawan Bencana
                             </a>
                         </li>
                     </ul>
                 </div>
             </div>
+            @endif
 
             <div class="pt-4 px-3 pb-2 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
                 Akses Publik
@@ -200,14 +209,26 @@
         <div class="flex items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-2.5 min-w-0">
                 <div class="w-9 h-9 rounded-full bg-[#ea5921] text-white flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                    {{ substr(Auth::user()->nama ?? 'Admin', 0, 2) }}
+                    @if($isKelAdmin)
+                        KL
+                    @else
+                        {{ substr(Auth::user()->nama ?? 'Admin', 0, 2) }}
+                    @endif
                 </div>
                 <div class="min-w-0">
                     <p class="text-xs font-bold text-slate-900 truncate leading-tight">
-                        {{ Auth::user()->nama ?? 'Petugas BPBD' }}
+                        @if($isKelAdmin)
+                            Kel. {{ $currentUser->kelurahan->nama_kelurahan ?? $currentUser->nama }}
+                        @else
+                            {{ Auth::user()->nama ?? 'Petugas BPBD' }}
+                        @endif
                     </p>
                     <p class="text-[10px] text-slate-500 truncate">
-                        {{ Auth::user()->email ?? 'admin@bpbd.bogor.go.id' }}
+                        @if($isKelAdmin)
+                            Kec. {{ $currentUser->kecamatan->nama_kecamatan ?? '-' }} &bull; Admin Kelurahan
+                        @else
+                            {{ Auth::user()->email ?? 'admin@bpbd.bogor.go.id' }}
+                        @endif
                     </p>
                 </div>
             </div>

@@ -435,7 +435,7 @@ class AdminController extends Controller
             $kecId = $request->kecamatan_id;
             $query->where(function ($q) use ($kecId) {
                 $q->where('id_kelurahan', function ($sub) use ($kecId) {
-                    $sub->select('id_kelurahan')->from('app_kelurahan')->where('id_kecamatan', $kecId)->limit(1);
+                    $sub->select('id_kelurahan')->from('app_md_kelurahan')->where('id_kecamatan', $kecId)->limit(1);
                 })->orWhereHas('kelurahan', function ($k) use ($kecId) {
                     $k->where('id_kecamatan', $kecId);
                 })->orWhereHas('laporanBencana', function ($l) use ($kecId) {
@@ -515,7 +515,7 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kelurahan' => 'required|exists:app_kelurahan,id_kelurahan',
+            'id_kelurahan' => 'required|exists:app_md_kelurahan,id_kelurahan',
             'jumlah_meninggal' => 'required|integer|min:0',
             'jumlah_luka_berat' => 'required|integer|min:0',
             'jumlah_luka_ringan' => 'required|integer|min:0',
@@ -543,7 +543,7 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kelurahan' => 'required|exists:app_kelurahan,id_kelurahan',
+            'id_kelurahan' => 'required|exists:app_md_kelurahan,id_kelurahan',
             'jumlah_meninggal' => 'required|integer|min:0',
             'jumlah_luka_berat' => 'required|integer|min:0',
             'jumlah_luka_ringan' => 'required|integer|min:0',
@@ -631,7 +631,7 @@ class AdminController extends Controller
             $kecId = $request->kecamatan_id;
             $query->where(function ($q) use ($kecId) {
                 $q->where('id_kelurahan', function ($sub) use ($kecId) {
-                    $sub->select('id_kelurahan')->from('app_kelurahan')->where('id_kecamatan', $kecId)->limit(1);
+                    $sub->select('id_kelurahan')->from('app_md_kelurahan')->where('id_kecamatan', $kecId)->limit(1);
                 })->orWhereHas('kelurahan', function ($k) use ($kecId) {
                     $k->where('id_kecamatan', $kecId);
                 })->orWhereHas('laporanBencana', function ($l) use ($kecId) {
@@ -690,7 +690,7 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kelurahan' => 'required|exists:app_kelurahan,id_kelurahan',
+            'id_kelurahan' => 'required|exists:app_md_kelurahan,id_kelurahan',
             'jenis_kerusakan' => 'required|string|max:100',
             'tingkat_kerusakan' => 'required|in:Berat,Sedang,Ringan',
             'jumlah_unit' => 'required|integer|min:1',
@@ -713,7 +713,7 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kelurahan' => 'required|exists:app_kelurahan,id_kelurahan',
+            'id_kelurahan' => 'required|exists:app_md_kelurahan,id_kelurahan',
             'jenis_kerusakan' => 'required|string|max:100',
             'tingkat_kerusakan' => 'required|in:Berat,Sedang,Ringan',
             'jumlah_unit' => 'required|integer|min:1',
@@ -805,8 +805,8 @@ class AdminController extends Controller
             'nama_posko' => 'required|string|max:150',
             'jenis_posko' => 'required|string|max:100',
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kecamatan' => 'required|exists:app_kecamatan,id_kecamatan',
-            'id_kelurahan' => 'nullable|exists:app_kelurahan,id_kelurahan',
+            'id_kecamatan' => 'required|exists:app_md_kecamatan,id_kecamatan',
+            'id_kelurahan' => 'nullable|exists:app_md_kelurahan,id_kelurahan',
             'alamat_lengkap' => 'required|string|max:1000',
             'kapasitas_maksimal' => 'required|integer|min:1',
             'jumlah_pengungsi' => 'required|integer|min:0',
@@ -836,8 +836,8 @@ class AdminController extends Controller
             'nama_posko' => 'required|string|max:150',
             'jenis_posko' => 'required|string|max:100',
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kecamatan' => 'required|exists:app_kecamatan,id_kecamatan',
-            'id_kelurahan' => 'nullable|exists:app_kelurahan,id_kelurahan',
+            'id_kecamatan' => 'required|exists:app_md_kecamatan,id_kecamatan',
+            'id_kelurahan' => 'nullable|exists:app_md_kelurahan,id_kelurahan',
             'alamat_lengkap' => 'required|string|max:1000',
             'kapasitas_maksimal' => 'required|integer|min:1',
             'jumlah_pengungsi' => 'required|integer|min:0',
@@ -1077,7 +1077,7 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kelurahan' => 'nullable|exists:app_kelurahan,id_kelurahan',
+            'id_kelurahan' => 'nullable|exists:app_md_kelurahan,id_kelurahan',
             'id_stok' => 'nullable|exists:app_stok_bantuan,id_stok',
             'jumlah' => 'required|integer|min:1',
             'satuan' => 'required|string|max:50',
@@ -1105,7 +1105,7 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kelurahan' => 'nullable|exists:app_kelurahan,id_kelurahan',
+            'id_kelurahan' => 'nullable|exists:app_md_kelurahan,id_kelurahan',
             'id_stok' => 'nullable|exists:app_stok_bantuan,id_stok',
             'jumlah' => 'required|integer|min:1',
             'satuan' => 'required|string|max:50',

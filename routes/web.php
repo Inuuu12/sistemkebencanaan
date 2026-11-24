@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\BencanaController;
+use App\Http\Controllers\Admin\DaerahRawanController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\KecamatanController;
+use App\Http\Controllers\Admin\KelurahanController;
 use App\Http\Controllers\Admin\KerusakanController;
 use App\Http\Controllers\Admin\KorbanController;
 use App\Http\Controllers\Admin\LaporanController;
@@ -12,6 +15,7 @@ use App\Http\Controllers\Public\AduanController;
 use App\Http\Controllers\Public\ApiController;
 use App\Http\Controllers\Public\BeritaController;
 use App\Http\Controllers\Public\HomeController;
+use App\Http\Controllers\Public\KejadianController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,6 +27,8 @@ use Illuminate\Support\Facades\Route;
 
 // Public Portal Routes
 Route::get('/', [HomeController::class, 'index'])->name('public.home');
+Route::get('/kejadian', [KejadianController::class, 'index'])->name('public.kejadian');
+Route::get('/kejadian/{id}', [KejadianController::class, 'detail'])->name('public.kejadian.detail');
 Route::get('/berita', [BeritaController::class, 'news'])->name('public.news');
 Route::get('/berita/{id}', [BeritaController::class, 'newsDetail'])->name('public.news.detail');
 Route::get('/lapor', [AduanController::class, 'aduan'])->name('public.aduan');
@@ -84,4 +90,22 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/bencana', [BencanaController::class, 'storeBencana'])->name('bencana.store');
     Route::put('/bencana/{id}', [BencanaController::class, 'updateBencana'])->name('bencana.update');
     Route::delete('/bencana/{id}', [BencanaController::class, 'destroyBencana'])->name('bencana.destroy');
+
+    // Manajemen Master Data Desa & Kelurahan
+    Route::get('/kelurahan', [KelurahanController::class, 'index'])->name('kelurahan.index');
+    Route::post('/kelurahan', [KelurahanController::class, 'store'])->name('kelurahan.store');
+    Route::put('/kelurahan/{id}', [KelurahanController::class, 'update'])->name('kelurahan.update');
+    Route::delete('/kelurahan/{id}', [KelurahanController::class, 'destroy'])->name('kelurahan.destroy');
+
+    // Manajemen Master Data Kecamatan
+    Route::get('/kecamatan', [KecamatanController::class, 'index'])->name('kecamatan.index');
+    Route::post('/kecamatan', [KecamatanController::class, 'store'])->name('kecamatan.store');
+    Route::put('/kecamatan/{id}', [KecamatanController::class, 'update'])->name('kecamatan.update');
+    Route::delete('/kecamatan/{id}', [KecamatanController::class, 'destroy'])->name('kecamatan.destroy');
+
+    // Manajemen Zonasi Titik Rawan Bencana
+    Route::get('/rawan', [DaerahRawanController::class, 'index'])->name('rawan.index');
+    Route::post('/rawan', [DaerahRawanController::class, 'store'])->name('rawan.store');
+    Route::put('/rawan/{id}', [DaerahRawanController::class, 'update'])->name('rawan.update');
+    Route::delete('/rawan/{id}', [DaerahRawanController::class, 'destroy'])->name('rawan.destroy');
 });

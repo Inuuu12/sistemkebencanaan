@@ -8,13 +8,6 @@
     <!-- 1. HEADER HALAMAN -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
-            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-slate-800 transition-colors">Admin</a>
-                <span>/</span>
-                <span class="text-slate-400">Logistik & Bantuan</span>
-                <span>/</span>
-                <span class="text-[#ea5921]">Distribusi Bantuan</span>
-            </div>
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
                 <span>Distribusi & Penyaluran Bantuan</span>
             </h1>
@@ -26,13 +19,32 @@
         <div class="flex items-center gap-2.5 self-start sm:self-auto">
             <button type="button" onclick="openCreateModal()" 
                     class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#ea5921] text-white hover:bg-[#d94812] transition shadow-sm shadow-orange-500/20 cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
                 <span>Catat Distribusi Baru</span>
             </button>
         </div>
     </div>
+
+    @if(!empty($isKelurahanAdmin) && Auth::user()->kelurahan)
+    <!-- Banner Mode Distribusi Kelurahan -->
+    <div class="p-4 rounded-2xl bg-orange-50 border border-orange-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#ea5921] text-white flex items-center justify-center text-lg font-bold shrink-0 shadow-sm shadow-orange-500/20">
+                🚚
+            </div>
+            <div>
+                <h4 class="text-sm font-extrabold text-slate-900">
+                    Penyaluran Bantuan: Kelurahan {{ Auth::user()->kelurahan->nama_kelurahan ?? '-' }} (Kec. {{ Auth::user()->kecamatan->nama_kecamatan ?? '-' }})
+                </h4>
+                <p class="text-xs text-slate-600 mt-0.5">
+                    Hanya menampilkan dan mencatat distribusi logistik ke posko/warga di wilayah kelurahan Anda.
+                </p>
+            </div>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-orange-100 text-[#ea5921] text-xs font-bold shrink-0">
+            Khusus Kelurahan
+        </span>
+    </div>
+    @endif
 
     <!-- Alert Notifikasi Flash Message -->
     @if(session('success'))
@@ -89,12 +101,6 @@
                     <span class="text-2xl sm:text-3xl font-black text-slate-900">{{ number_format($totalDistribusi) }}</span>
                     <span class="text-xs text-slate-500 font-semibold">Tugas</span>
                 </div>
-                <p class="text-[11px] text-slate-400 mt-1">Misi bantuan logistik</p>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-orange-50 border border-orange-200/60 text-[#ea5921] flex items-center justify-center shrink-0">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                </svg>
             </div>
         </div>
 
@@ -106,12 +112,6 @@
                     <span class="text-2xl sm:text-3xl font-black text-amber-600">{{ number_format($totalProses) }}</span>
                     <span class="text-xs text-amber-800 font-semibold">Armada</span>
                 </div>
-                <p class="text-[11px] text-slate-400 mt-1">Dalam perjalanan TRC BPBD</p>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-600 flex items-center justify-center shrink-0">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
             </div>
         </div>
 
@@ -123,13 +123,6 @@
                     <span class="text-2xl sm:text-3xl font-black text-blue-600">{{ number_format($totalTiba) }}</span>
                     <span class="text-xs text-blue-800 font-semibold">Titik</span>
                 </div>
-                <p class="text-[11px] text-slate-400 mt-1">Sedang dibagikan ke warga</p>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200/60 text-blue-600 flex items-center justify-center shrink-0">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
             </div>
         </div>
 
@@ -141,12 +134,6 @@
                     <span class="text-2xl sm:text-3xl font-black text-emerald-600">{{ number_format($totalTerkirim) }}</span>
                     <span class="text-xs text-emerald-800 font-semibold">Tersalur</span>
                 </div>
-                <p class="text-[11px] text-slate-400 mt-1">Berita acara serah terima valid</p>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200/60 text-emerald-600 flex items-center justify-center shrink-0">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
             </div>
         </div>
     </div>
@@ -341,6 +328,7 @@
                                         onclick="openEditModal({{ json_encode([
                                             'id_distribusi' => $dist->id_distribusi,
                                             'id_laporan' => $dist->id_laporan,
+                                            'id_kecamatan' => $dist->kelurahan?->id_kecamatan ?? '',
                                             'id_kelurahan' => $dist->id_kelurahan,
                                             'id_stok' => $dist->id_stok,
                                             'jumlah' => $dist->jumlah,
@@ -433,36 +421,77 @@
                 </select>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <!-- Kelurahan Tujuan -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Kelurahan / Desa Tujuan
-                    </label>
-                    <select name="id_kelurahan" 
-                            class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
-                        <option value="">Pilih Kelurahan Tujuan</option>
-                        @foreach($kelurahanList as $kel)
-                            <option value="{{ $kel->id_kelurahan }}">{{ $kel->nama_kelurahan }}</option>
-                        @endforeach
-                    </select>
+            <!-- Lokasi Wilayah Penyaluran: Pilih Kecamatan lalu Kelurahan -->
+            <!-- Lokasi Kelurahan Tujuan Penyaluran -->
+            @if(!empty($isKelurahanAdmin) && Auth::user()->kelurahan)
+            <div class="p-4 rounded-2xl bg-orange-50/80 border border-orange-200 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Wilayah Kelurahan Penerima:</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-[#ea5921]">Otomatis</span>
+                </div>
+                <p class="text-sm font-extrabold text-slate-900">
+                    Kel. {{ Auth::user()->kelurahan->nama_kelurahan ?? '-' }}, Kec. {{ Auth::user()->kecamatan->nama_kecamatan ?? '-' }}
+                </p>
+                <input type="hidden" name="id_kelurahan" value="{{ Auth::user()->id_kelurahan }}">
+            </div>
+            @else
+            <div class="p-4 rounded-2xl bg-orange-50/60 border border-orange-100 space-y-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-lg bg-orange-100 text-[#ea5921] flex items-center justify-center shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Lokasi Desa/Kelurahan Tujuan Penyaluran</span>
+                        <span class="text-[11px] text-slate-500">Pilih kecamatan terlebih dahulu untuk memuat daftar kelurahan</span>
+                    </div>
                 </div>
 
-                <!-- Ambil dari Stok Gudang -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Item Stok Logistik
-                    </label>
-                    <select name="id_stok" id="create_id_stok" onchange="autoFillSatuan(this)"
-                            class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
-                        <option value="">Pilih Item dari Gudang</option>
-                        @foreach($stokList as $st)
-                            <option value="{{ $st->id_stok }}" data-satuan="{{ $st->satuan }}">
-                                {{ $st->nama_item }} ({{ $st->satuan }})
-                            </option>
-                        @endforeach
-                    </select>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <!-- 1. Pilih Kecamatan Terlebih Dahulu -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            1. Kecamatan Tujuan <span class="text-rose-600">*</span>
+                        </label>
+                        <select id="dist_create_kecamatan" onchange="filterDistKelurahan('dist_create')" required
+                                class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                            <option value="">-- Pilih Kecamatan Dulu --</option>
+                            @foreach($districts as $d)
+                                <option value="{{ $d->id_kecamatan }}">Kec. {{ $d->nama_kecamatan }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- 2. Pilih Kelurahan (Otomatis setelah Kecamatan dipilih) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            2. Kelurahan / Desa Tujuan <span class="text-rose-600">*</span>
+                        </label>
+                        <select name="id_kelurahan" id="dist_create_kelurahan" required
+                                class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                            <option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>
+                        </select>
+                    </div>
                 </div>
+            </div>
+            @endif
+
+            <!-- Ambil dari Stok Gudang -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Item Stok Logistik yang Disalurkan <span class="text-rose-600">*</span>
+                </label>
+                <select name="id_stok" id="create_id_stok" onchange="autoFillSatuan(this)" required
+                        class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                    <option value="">Pilih Item dari Gudang</option>
+                    @foreach($stokList as $st)
+                        <option value="{{ $st->id_stok }}" data-satuan="{{ $st->satuan }}">
+                            {{ $st->nama_item }} ({{ $st->satuan }})
+                        </option>
+                    @endforeach
+                </select>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -583,32 +612,74 @@
                 </select>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Kelurahan / Desa Tujuan
-                    </label>
-                    <select id="edit_id_kelurahan" name="id_kelurahan" 
-                            class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
-                        <option value="">Pilih Kelurahan Tujuan</option>
-                        @foreach($kelurahanList as $kel)
-                            <option value="{{ $kel->id_kelurahan }}">{{ $kel->nama_kelurahan }}</option>
-                        @endforeach
-                    </select>
+            <!-- Lokasi Kelurahan Tujuan Penyaluran -->
+            @if(!empty($isKelurahanAdmin) && Auth::user()->kelurahan)
+            <div class="p-4 rounded-2xl bg-orange-50/80 border border-orange-200 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Wilayah Kelurahan Penerima:</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-[#ea5921]">Otomatis</span>
+                </div>
+                <p class="text-sm font-extrabold text-slate-900">
+                    Kel. {{ Auth::user()->kelurahan->nama_kelurahan ?? '-' }}, Kec. {{ Auth::user()->kecamatan->nama_kecamatan ?? '-' }}
+                </p>
+                <input type="hidden" name="id_kelurahan" value="{{ Auth::user()->id_kelurahan }}">
+            </div>
+            @else
+            <div class="p-4 rounded-2xl bg-orange-50/60 border border-orange-100 space-y-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-lg bg-orange-100 text-[#ea5921] flex items-center justify-center shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Lokasi Desa/Kelurahan Tujuan Penyaluran</span>
+                        <span class="text-[11px] text-slate-500">Pilih kecamatan terlebih dahulu untuk memuat daftar kelurahan</span>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Item Stok Logistik
-                    </label>
-                    <select id="edit_id_stok" name="id_stok" 
-                            class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
-                        <option value="">Pilih Item dari Gudang</option>
-                        @foreach($stokList as $st)
-                            <option value="{{ $st->id_stok }}">{{ $st->nama_item }}</option>
-                        @endforeach
-                    </select>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <!-- 1. Pilih Kecamatan Terlebih Dahulu -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            1. Kecamatan Tujuan <span class="text-rose-600">*</span>
+                        </label>
+                        <select id="dist_edit_kecamatan" onchange="filterDistKelurahan('dist_edit')" required
+                                class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                            <option value="">-- Pilih Kecamatan Dulu --</option>
+                            @foreach($districts as $d)
+                                <option value="{{ $d->id_kecamatan }}">Kec. {{ $d->nama_kecamatan }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- 2. Pilih Kelurahan (Otomatis setelah Kecamatan dipilih) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            2. Kelurahan / Desa Tujuan <span class="text-rose-600">*</span>
+                        </label>
+                        <select name="id_kelurahan" id="dist_edit_kelurahan" required
+                                class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                            <option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>
+                        </select>
+                    </div>
                 </div>
+            </div>
+            @endif
+
+            <!-- Item Stok Logistik -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Item Stok Logistik yang Disalurkan <span class="text-rose-600">*</span>
+                </label>
+                <select id="edit_id_stok" name="id_stok" required
+                        class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#ea5921] transition">
+                    <option value="">Pilih Item dari Gudang</option>
+                    @foreach($stokList as $st)
+                        <option value="{{ $st->id_stok }}">{{ $st->nama_item }}</option>
+                    @endforeach
+                </select>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -723,6 +794,37 @@
 
 @push('scripts')
 <script>
+    const districtsData = {!! json_encode($districts ?? []) !!};
+
+    function filterDistKelurahan(prefix, selectedKelurahanId = null) {
+        const kecSelect = document.getElementById(`${prefix}_kecamatan`);
+        const kelSelect = document.getElementById(`${prefix}_kelurahan`);
+        if (!kecSelect || !kelSelect) return;
+
+        const kecId = kecSelect.value;
+        kelSelect.innerHTML = '<option value="">-- Pilih Kelurahan / Desa --</option>';
+
+        if (!kecId) {
+            kelSelect.innerHTML = '<option value="">-- Pilih Kecamatan Terlebih Dahulu --</option>';
+            return;
+        }
+
+        const district = districtsData.find(d => d.id_kecamatan == kecId);
+        if (district && district.kelurahan && district.kelurahan.length > 0) {
+            district.kelurahan.forEach(kel => {
+                const opt = document.createElement('option');
+                opt.value = kel.id_kelurahan;
+                opt.textContent = kel.nama_kelurahan;
+                if (selectedKelurahanId && kel.id_kelurahan == selectedKelurahanId) {
+                    opt.selected = true;
+                }
+                kelSelect.appendChild(opt);
+            });
+        } else {
+            kelSelect.innerHTML = '<option value="">(Belum ada data kelurahan)</option>';
+        }
+    }
+
     function autoFillSatuan(selectElem) {
         const opt = selectElem.options[selectElem.selectedIndex];
         const satuan = opt.getAttribute('data-satuan');
@@ -735,6 +837,12 @@
     function openCreateModal() {
         document.getElementById('modal-create').classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
+
+        const kecSelect = document.getElementById('dist_create_kecamatan');
+        if (kecSelect) {
+            kecSelect.value = '';
+            filterDistKelurahan('dist_create');
+        }
     }
 
     function closeCreateModal() {
@@ -747,7 +855,14 @@
         form.action = "{{ url('admin/logistik/distribusi') }}/" + data.id_distribusi;
 
         document.getElementById('edit_id_laporan').value = data.id_laporan || '';
-        document.getElementById('edit_id_kelurahan').value = data.id_kelurahan || '';
+
+        // Set Kecamatan & Kelurahan
+        const kecSelect = document.getElementById('dist_edit_kecamatan');
+        if (kecSelect) {
+            kecSelect.value = data.id_kecamatan || '';
+            filterDistKelurahan('dist_edit', data.id_kelurahan);
+        }
+
         document.getElementById('edit_id_stok').value = data.id_stok || '';
         document.getElementById('edit_jumlah').value = data.jumlah || 1;
         document.getElementById('edit_satuan').value = data.satuan || '';

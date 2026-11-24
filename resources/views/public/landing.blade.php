@@ -35,58 +35,40 @@
     <div id="public-map" class="absolute inset-0 z-0 bg-slate-100 dark:bg-slate-900 w-full h-full"></div>
 
     <!-- bar side publik dengan Tombol Toggle Panah Samping (Ala Coconext) -->
-    <div id="side-toolbar-wrapper" class="sidebar-collapsed absolute top-4 sm:top-5 left-0 z-[400] flex items-center transition-transform duration-300 ease-in-out pointer-events-none">
+    <div id="side-toolbar-wrapper" class="sidebar-collapsed absolute top-4 sm:top-5 left-0 z-[400] flex items-start transition-transform duration-300 ease-in-out pointer-events-none">
         
         <!-- Toolbar Vertikal Cepat -->
         <div id="quick-tools-bar" class="pointer-events-auto ml-2 sm:ml-3 flex flex-col items-center gap-2 p-1.5 sm:p-2 rounded-2xl sm:rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/60 dark:border-slate-800/80 shadow-xl shadow-black/10 shrink-0">
             
-            <!-- Berita Link -->
-            <a href="{{ route('public.news') }}" title="Berita Kebencanaan"
-                class="group flex items-center justify-center p-2.5 sm:p-3 rounded-xl sm:rounded-full bg-white/90 dark:bg-slate-800/90 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 shrink-0">
-                <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
-                </svg>
-            </a>
-
             <!-- Button kontak darurat -->
-            <button type="button" onclick="toggleModal('contact-modal')" title="Kontak Darurat BPBD"
-                class="group relative flex items-center justify-center p-2.5 sm:p-3 rounded-xl sm:rounded-full bg-white/90 dark:bg-slate-800/90 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 shrink-0">
+            <button type="button" id="tool-btn-contact" onclick="toggleFlyout('contact')" title="Kontak Darurat BPBD"
+                class="tool-btn group relative flex items-center justify-center p-2.5 sm:p-3 rounded-xl sm:rounded-full bg-white/90 dark:bg-slate-800/90 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 shrink-0">
                 <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                 </svg>
             </button>
 
             <!-- button filter peta -->
-            <button type="button" onclick="toggleModal('filter-modal')" title="Filter Peta"
-                class="group flex items-center justify-center p-2.5 sm:p-3 rounded-xl sm:rounded-full bg-white/90 dark:bg-slate-800/90 text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 shrink-0">
+            <button type="button" id="tool-btn-filter" onclick="toggleFlyout('filter')" title="Filter Peta"
+                class="tool-btn group relative flex items-center justify-center p-2.5 sm:p-3 rounded-xl sm:rounded-full bg-white/90 dark:bg-slate-800/90 text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 shrink-0">
                 <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                 </svg>
+                @if(request('kecamatan_id') || request('bencana_id') || request('status'))
+                <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-teal-500 ring-2 ring-white dark:ring-slate-900"></span>
+                @endif
             </button>
 
             <!-- button pilihan peta -->
-            <button type="button" onclick="toggleModal('basemap-modal')" title="Pilihan Peta"
-                class="group flex items-center justify-center p-2.5 sm:p-3 rounded-xl sm:rounded-full bg-white/90 dark:bg-slate-800/90 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 shrink-0">
+            <button type="button" id="tool-btn-basemap" onclick="toggleFlyout('basemap')" title="Pilihan Peta"
+                class="tool-btn group flex items-center justify-center p-2.5 sm:p-3 rounded-xl sm:rounded-full bg-white/90 dark:bg-slate-800/90 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 shrink-0">
                 <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
                 </svg>
             </button>
 
-            <!-- button informasi kejadian bencana (akses cepat) -->
-            <button type="button" onclick="toggleModal('info-bencana-panel')" title="Daftar Kejadian Bencana"
-                class="group relative flex items-center justify-center p-2.5 sm:p-3 rounded-xl sm:rounded-full bg-white/90 dark:bg-slate-800/90 text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 shrink-0">
-                <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-                @if(count($reports) > 0)
-                <span class="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-[#ea5921] text-white">
-                    {{ count($reports) }}
-                </span>
-                @endif
-            </button>
-
             <!-- button lokasi saya -->
-            <button type="button" onclick="locateUserGPS()" title="Lokasi Saya"
+            <button type="button" id="tool-btn-gps" onclick="locateUserGPS()" title="Lokasi Saya"
                 class="group flex items-center justify-center p-2.5 sm:p-3 rounded-xl sm:rounded-full bg-white/90 dark:bg-slate-800/90 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 dark:hover:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 shrink-0">
                 <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="3" stroke-width="2"/>
@@ -97,16 +79,192 @@
 
         <!-- Tombol Panah Samping (Toggle ala Coconext) -->
         <button id="side-toolbar-toggle-btn" type="button" onclick="toggleSideToolbar()" title="Tampilkan Menu Alat"
-            class="pointer-events-auto ml-1.5 flex items-center justify-center w-8 h-12 sm:w-9 sm:h-14 rounded-r-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-l-0 border-slate-200 dark:border-slate-800 shadow-lg shadow-black/10 text-slate-600 dark:text-slate-300 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all cursor-pointer">
+            class="pointer-events-auto ml-1.5 self-center flex items-center justify-center w-8 h-12 sm:w-9 sm:h-14 rounded-r-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-l-0 border-slate-200 dark:border-slate-800 shadow-lg shadow-black/10 text-slate-600 dark:text-slate-300 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all cursor-pointer">
             <svg id="side-toolbar-arrow-icon" class="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
             </svg>
         </button>
+
+        <!-- FLYOUT PANELS CONTAINER (Melayang di samping toolbar tanpa modal gelap) -->
+        <div id="quick-flyouts-container" class="absolute left-full top-0 ml-2 sm:ml-3 z-[410] pointer-events-auto">
+
+            <!-- FLYOUT 1: KONTAK DARURAT HOTLINE BPBD -->
+            <div id="flyout-contact" class="hidden fixed top-20 left-3 right-3 sm:static sm:w-[350px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-black/20 border border-slate-200/80 dark:border-slate-800 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-200">
+                <div class="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-xs sm:text-sm text-slate-900 dark:text-white leading-tight">Kontak Darurat</h3>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">Siaga 24 Jam BPBD Kab. Bogor</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeAllFlyouts()" class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="p-3 sm:p-4 space-y-2 max-h-[60vh] overflow-y-auto">
+                    @foreach($emergencyContacts as $c)
+                    <a href="tel:{{ $c['phone'] }}" class="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/70 hover:border-red-400 dark:hover:border-red-500 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all group">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center font-black text-xs shrink-0">
+                                {{ substr($c['phone'], 0, 3) }}
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-red-600 dark:group-hover:text-red-400">
+                                    {{ $c['name'] }}
+                                </h4>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ $c['phone'] }} • {{ $c['description'] }}</p>
+                            </div>
+                        </div>
+                        <div class="ml-2 px-2.5 py-1 rounded-lg bg-red-600 text-white font-extrabold text-[10px] group-hover:scale-105 transition-transform shrink-0">
+                            Panggil
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- FLYOUT 2: FILTER PETA KEJADIAN -->
+            <div id="flyout-filter" class="hidden fixed top-20 left-3 right-3 sm:static sm:w-[350px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-black/20 border border-slate-200/80 dark:border-slate-800 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-200">
+                <div class="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-600 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-xs sm:text-sm text-slate-900 dark:text-white leading-tight">Filter Peta Kejadian</h3>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">Saring titik bencana secara langsung</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeAllFlyouts()" class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <form action="{{ route('public.home') }}" method="GET" class="p-4 space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                            Kecamatan
+                        </label>
+                        <select name="kecamatan_id" id="filter-kecamatan"
+                            class="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
+                            <option value="">Semua Kecamatan (40 Kecamatan)</option>
+                            @foreach($kecamatanList as $kec)
+                            <option value="{{ $kec->id_kecamatan }}" {{ request('kecamatan_id') == $kec->id_kecamatan ? 'selected' : '' }}>
+                                {{ $kec->nama_kecamatan }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                            Jenis Kejadian Bencana
+                        </label>
+                        <select name="bencana_id"
+                            class="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
+                            <option value="">Semua Jenis Bencana</option>
+                            @foreach($bencanaTypes as $bt)
+                            <option value="{{ $bt['id'] }}" {{ request('bencana_id') == $bt['id'] ? 'selected' : '' }}>
+                                {{ $bt['nama'] }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                            Status Penanganan
+                        </label>
+                        <select name="status"
+                            class="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
+                            <option value="">Semua Status</option>
+                            <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending (Menunggu Verifikasi)</option>
+                            <option value="Handling" {{ request('status') == 'Handling' ? 'selected' : '' }}>Handling (Sedang Ditangani)</option>
+                            <option value="Selesai" {{ request('status') == 'Selesai' ? 'selected' : '' }}>Selesai (Penanganan Tuntas)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2 pt-1.5">
+                        <button type="submit" class="flex-1 py-2 px-3 rounded-xl bg-[#ea5921] hover:bg-[#d94812] text-white text-xs font-black shadow-md transition-all active:scale-95">
+                            Terapkan Filter
+                        </button>
+                        <a href="{{ route('public.home') }}" class="py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-center">
+                            Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- FLYOUT 3: PILIHAN BASEMAP LAYER PETA -->
+            <div id="flyout-basemap" class="hidden fixed top-20 left-3 right-3 sm:static sm:w-[330px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-black/20 border border-slate-200/80 dark:border-slate-800 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-200">
+                <div class="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-xs sm:text-sm text-slate-900 dark:text-white leading-tight">Pilihan Layer Peta</h3>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">Ganti basemap tanpa layar gelap</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeAllFlyouts()" class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="p-3 space-y-2">
+                    <button type="button" onclick="changeBasemap('osm')" id="bm-opt-osm" class="basemap-option w-full flex items-center justify-between p-2.5 rounded-2xl border border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-left transition-all">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xl">🗺️</span>
+                            <div>
+                                <h4 class="font-extrabold text-xs text-slate-900 dark:text-white">OpenStreetMap (Standar)</h4>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400">Peta jalan & fitur perkotaan jelas</p>
+                            </div>
+                        </div>
+                        <span class="bm-indicator w-4 h-4 rounded-full border border-emerald-500 flex items-center justify-center">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        </span>
+                    </button>
+
+                    <button type="button" onclick="changeBasemap('satellite')" id="bm-opt-satellite" class="basemap-option w-full flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 hover:border-emerald-500 hover:bg-emerald-50/30 dark:hover:bg-slate-800 text-left transition-all">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xl">🛰️</span>
+                            <div>
+                                <h4 class="font-extrabold text-xs text-slate-900 dark:text-white">Citra Satelit Esri</h4>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400">Foto udara topografi asli</p>
+                            </div>
+                        </div>
+                        <span class="bm-indicator w-4 h-4 rounded-full border border-slate-300 dark:border-slate-600"></span>
+                    </button>
+
+                    <button type="button" onclick="changeBasemap('topo')" id="bm-opt-topo" class="basemap-option w-full flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 hover:border-emerald-500 hover:bg-emerald-50/30 dark:hover:bg-slate-800 text-left transition-all">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xl">⛰️</span>
+                            <div>
+                                <h4 class="font-extrabold text-xs text-slate-900 dark:text-white">Topografi & Kontur</h4>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400">Ketinggian tanah & lereng</p>
+                            </div>
+                        </div>
+                        <span class="bm-indicator w-4 h-4 rounded-full border border-slate-300 dark:border-slate-600"></span>
+                    </button>
+
+                    <button type="button" onclick="changeBasemap('dark')" id="bm-opt-dark" class="basemap-option w-full flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 hover:border-emerald-500 hover:bg-emerald-50/30 dark:hover:bg-slate-800 text-left transition-all">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xl">🌙</span>
+                            <div>
+                                <h4 class="font-extrabold text-xs text-slate-900 dark:text-white">CartoDB Dark Matter</h4>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400">Mode malam & visual kontras</p>
+                            </div>
+                        </div>
+                        <span class="bm-indicator w-4 h-4 rounded-full border border-slate-300 dark:border-slate-600"></span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <!-- Tombol / Widget Kejadian di Kanan Bawah -->
+    <!-- Tombol / Widget Kejadian di Kanan Bawah (Halaman Baru Kejadian) -->
     <div class="absolute bottom-24 right-3 sm:right-4 z-[420] pointer-events-none">
-        <button type="button" onclick="toggleModal('info-bencana-panel')" title="Buka Daftar Kejadian Bencana"
+        <a href="{{ route('public.kejadian') }}" title="Buka Halaman Daftar Kejadian Bencana"
             class="pointer-events-auto group flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/60 dark:border-slate-800/80 shadow-xl shadow-black/10 hover:shadow-orange-500/10 hover:border-orange-300 dark:hover:border-orange-600 transition-all hover:scale-105 active:scale-95 cursor-pointer">
             <div class="relative flex items-center justify-center w-8 h-8 rounded-xl bg-[#ea5921] text-white shadow-md shadow-orange-500/30">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +272,6 @@
                 </svg>
                 @if(count($reports) > 0)
                 <span class="absolute -top-1 -right-1 flex h-4 w-4">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                     <span class="relative inline-flex items-center justify-center rounded-full h-4 w-4 bg-red-600 text-[9px] font-black text-white">
                         {{ count($reports) }}
                     </span>
@@ -124,15 +281,15 @@
             <div class="text-left">
                 <div class="flex items-center gap-1.5">
                     <span class="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                        {{ $stats['total_laporan'] }} Kejadian
+                        Kejadian
                     </span>
                 </div>
                 <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500">Kabupaten Bogor</p>
             </div>
             <svg class="w-4 h-4 text-slate-400 group-hover:text-[#ea5921] transition-colors ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
-        </button>
+        </a>
     </div>
 
     <!-- bar side bawah -->
@@ -200,7 +357,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center justify-between gap-1 mb-1">
-                            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full {{ $rep['status'] === 'Selesai' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300' : ($rep['status'] === 'Handling' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300' : 'bg-red-100 text-red-700 dark:bg-red-950/80 dark:text-red-300') }}">
+                            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full {{ $rep['status'] === 'Selesai' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300' : ($rep['status'] === 'Handling' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300' : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300') }}">
                                 {{ $rep['status'] }}
                             </span>
                             <span class="text-[10px] text-slate-400">{{ $rep['time_ago'] }}</span>
@@ -225,6 +382,13 @@
                 Tidak ada laporan bencana yang aktif.
             </div>
             @endforelse
+        </div>
+
+        <!-- Footer Info Bencana Panel -->
+        <div class="p-3 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 text-center shrink-0">
+            <a href="{{ route('public.kejadian') }}" class="inline-flex items-center justify-center gap-1.5 w-full py-2 px-3 rounded-xl bg-[#ea5921] hover:bg-[#d94812] text-white text-xs font-black shadow-sm transition-all">
+                <span>Buka Seluruh Kejadian di Halaman Penuh →</span>
+            </a>
         </div>
     </div>
 
@@ -318,188 +482,18 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="px-5 py-3.5 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+                <a id="detail-full-page-btn" href="#"
+                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#ea5921] hover:bg-[#d94812] text-white font-black text-xs shadow-md transition-all active:scale-95">
+                    <span>Buka Halaman Lengkap Kejadian →</span>
+                </a>
                 <a id="detail-nav-btn" href="#" target="_blank" rel="noopener noreferrer"
-                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#ea5921] hover:bg-[#d94812] text-white font-bold text-xs shadow-md transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    <span>Navigasi Petunjuk Arah</span>
+                    class="inline-flex items-center justify-center gap-1 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all">
+                    <svg class="w-4 h-4 text-[#ea5921]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span>Rute Maps</span>
                 </a>
-                <button type="button" onclick="closeDetailModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
-                    Tutup
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL 3: KONTAK DARURAT HOTLINE BPBD -->
-    <div id="contact-modal" class="hidden fixed inset-0 z-[600] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
-            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <div class="p-2 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-black text-base text-slate-900 dark:text-white">Kontak Darurat Kabupaten Bogor</h3>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Siaga 24 Jam Kedaruratan & Penyelamatan</p>
-                    </div>
-                </div>
-                <button type="button" onclick="toggleModal('contact-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            <div class="p-4 space-y-2.5 max-h-[70vh] overflow-y-auto">
-                @foreach($emergencyContacts as $c)
-                <a href="tel:{{ $c['phone'] }}" class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 hover:border-red-400 dark:hover:border-red-500 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center font-black text-sm">
-                            {{ substr($c['phone'], 0, 3) }}
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400">
-                                {{ $c['name'] }}
-                            </h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ $c['description'] }}</p>
-                        </div>
-                    </div>
-                    <div class="px-3 py-1.5 rounded-xl bg-red-600 text-white font-extrabold text-xs group-hover:scale-105 transition-transform shrink-0">
-                        Panggil
-                    </div>
-                </a>
-                @endforeach
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL 4: FILTER PETA KEJADIAN -->
-    <div id="filter-modal" class="hidden fixed inset-0 z-[600] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
-            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <div class="p-2 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-black text-base text-slate-900 dark:text-white">Filter Data Kejadian</h3>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Pilih parameter untuk menyaring peta</p>
-                    </div>
-                </div>
-                <button type="button" onclick="toggleModal('filter-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            
-            <form action="{{ route('public.home') }}" method="GET" class="p-5 space-y-4">
-                <!-- Kecamatan -->
-                <div>
-                    <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                        Kecamatan (Kab. Bogor)
-                    </label>
-                    <select name="kecamatan_id" id="filter-kecamatan" onchange="loadFilterKelurahan(this.value)"
-                        class="w-full text-xs font-medium px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
-                        <option value="">Semua Kecamatan</option>
-                        @foreach($kecamatanList as $kec)
-                        <option value="{{ $kec->id_kecamatan }}" {{ request('kecamatan_id') == $kec->id_kecamatan ? 'selected' : '' }}>
-                            {{ $kec->nama_kecamatan }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Jenis Bencana -->
-                <div>
-                    <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                        Jenis Kejadian Bencana
-                    </label>
-                    <select name="bencana_id"
-                        class="w-full text-xs font-medium px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
-                        <option value="">Semua Jenis Bencana</option>
-                        @foreach($bencanaTypes as $bt)
-                        <option value="{{ $bt['id'] }}" {{ request('bencana_id') == $bt['id'] ? 'selected' : '' }}>
-                            {{ $bt['nama'] }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Status Penanganan -->
-                <div>
-                    <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                        Status Penanganan
-                    </label>
-                    <select name="status"
-                        class="w-full text-xs font-medium px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#ea5921] focus:outline-none">
-                        <option value="">Semua Status</option>
-                        <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending (Menunggu Verifikasi)</option>
-                        <option value="Handling" {{ request('status') == 'Handling' ? 'selected' : '' }}>Handling (Sedang Ditangani)</option>
-                        <option value="Selesai" {{ request('status') == 'Selesai' ? 'selected' : '' }}>Selesai (Penanganan Tuntas)</option>
-                    </select>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex items-center gap-2.5 pt-2">
-                    <button type="submit" class="flex-1 py-2.5 px-4 rounded-xl bg-[#ea5921] hover:bg-[#d94812] text-white text-xs font-extrabold shadow-md transition-all">
-                        Terapkan Filter
-                    </button>
-                    <a href="{{ route('public.home') }}" class="py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-center">
-                        Reset
-                    </a>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 5: PILIHAN BASEMAP LAYER PETA -->
-    <div id="basemap-modal" class="hidden fixed inset-0 z-[600] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-        <div class="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
-            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <div class="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-black text-base text-slate-900 dark:text-white">Pilihan Tampilan Peta</h3>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Pilih jenis layer basemap</p>
-                    </div>
-                </div>
-                <button type="button" onclick="toggleModal('basemap-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            
-            <div class="p-4 space-y-2">
-                <button type="button" onclick="changeBasemap('osm')" class="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-slate-800 transition-all text-left">
-                    <div>
-                        <h4 class="font-extrabold text-xs text-slate-800 dark:text-white">OpenStreetMap (Standar)</h4>
-                        <p class="text-[10px] text-slate-400">Peta jalan & fitur perkotaan jelas</p>
-                    </div>
-                    <span class="w-4 h-4 rounded-full border border-emerald-500 flex items-center justify-center">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    </span>
-                </button>
-
-                <button type="button" onclick="changeBasemap('satellite')" class="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-slate-800 transition-all text-left">
-                    <div>
-                        <h4 class="font-extrabold text-xs text-slate-800 dark:text-white">Satelit Esri / Google</h4>
-                        <p class="text-[10px] text-slate-400">Citra foto udara topografi asli</p>
-                    </div>
-                    <span class="w-4 h-4 rounded-full border border-slate-300"></span>
-                </button>
-
-                <button type="button" onclick="changeBasemap('topo')" class="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-slate-800 transition-all text-left">
-                    <div>
-                        <h4 class="font-extrabold text-xs text-slate-800 dark:text-white">Topografi & Kontur</h4>
-                        <p class="text-[10px] text-slate-400">Ketinggian tanah, pegunungan, lereng</p>
-                    </div>
-                    <span class="w-4 h-4 rounded-full border border-slate-300"></span>
-                </button>
-
-                <button type="button" onclick="changeBasemap('dark')" class="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-slate-800 transition-all text-left">
-                    <div>
-                        <h4 class="font-extrabold text-xs text-slate-800 dark:text-white">CartoDB Dark Matter</h4>
-                        <p class="text-[10px] text-slate-400">Sangat nyaman untuk mode malam</p>
-                    </div>
-                    <span class="w-4 h-4 rounded-full border border-slate-300"></span>
+                <button type="button" onclick="closeDetailModal()" class="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    ✕
                 </button>
             </div>
         </div>
@@ -606,6 +600,13 @@
         // Letakkan zoom control di kanan atas
         L.control.zoom({ position: 'topright' }).addTo(map);
 
+        // Tutup flyout jika peta di-klik atau digeser
+        map.on('click dragstart', function() {
+            if (typeof closeAllFlyouts === 'function') {
+                closeAllFlyouts();
+            }
+        });
+
         markersLayer = L.layerGroup().addTo(map);
         boundariesLayer = L.layerGroup().addTo(map);
 
@@ -626,7 +627,26 @@
         map.removeLayer(activeTileLayer);
         activeTileLayer = TILES[type];
         map.addLayer(activeTileLayer);
-        toggleModal('basemap-modal');
+
+        // Update indikator pilihan aktif pada Flyout Basemap
+        document.querySelectorAll('.basemap-option').forEach(el => {
+            el.className = 'basemap-option w-full flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 hover:border-emerald-500 hover:bg-emerald-50/30 dark:hover:bg-slate-800 text-left transition-all';
+            const ind = el.querySelector('.bm-indicator');
+            if (ind) {
+                ind.className = 'bm-indicator w-4 h-4 rounded-full border border-slate-300 dark:border-slate-600';
+                ind.innerHTML = '';
+            }
+        });
+
+        const activeOpt = document.getElementById(`bm-opt-${type}`);
+        if (activeOpt) {
+            activeOpt.className = 'basemap-option w-full flex items-center justify-between p-2.5 rounded-2xl border border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-left transition-all';
+            const ind = activeOpt.querySelector('.bm-indicator');
+            if (ind) {
+                ind.className = 'bm-indicator w-4 h-4 rounded-full border border-emerald-500 flex items-center justify-center';
+                ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span>';
+            }
+        }
     }
 
     // LOAD GEOJSON ADMINISTRATIVE BOUNDARIES KAB BOGOR
@@ -688,7 +708,7 @@
             if (!report.lat || !report.lng) return;
 
             // Buat Custom Icon Badge
-            const statusColor = report.status === 'Selesai' ? '#10b981' : (report.status === 'Handling' ? '#f59e0b' : '#ef4444');
+            const statusColor = report.status === 'Selesai' ? '#10b981' : (report.status === 'Handling' ? '#f59e0b' : '#64748b');
             const customIconHtml = `
                 <div class="relative cursor-pointer flex items-center justify-center transform hover:scale-110 transition-transform" style="width: 44px; height: 44px;">
                     <div class="relative w-10 h-10 rounded-full bg-white dark:bg-slate-900 border-2 shadow-xl flex items-center justify-center p-1.5" style="border-color: ${statusColor};">
@@ -717,9 +737,14 @@
                     </div>
                     <h4 class="font-extrabold text-xs leading-tight mb-1">${report.title}</h4>
                     <p class="text-[10px] text-slate-500 mb-2 truncate">Kec. ${report.district}, Desa ${report.village}</p>
-                    <button type="button" onclick="showReportDetail(${report.id})" class="w-full py-1.5 px-3 rounded-lg bg-[#ea5921] hover:bg-[#d94812] text-white text-[11px] font-bold text-center block shadow-sm">
-                        Lihat Detail Kejadian
-                    </button>
+                    <div class="flex items-center gap-1.5 mt-2">
+                        <button type="button" onclick="showReportDetail(${report.id})" class="flex-1 py-1.5 px-2 rounded-lg bg-[#ea5921] hover:bg-[#d94812] text-white text-[10px] font-bold text-center block shadow-sm">
+                            Ringkasan
+                        </button>
+                        <a href="{{ url('/kejadian') }}/${report.id}" class="flex-1 py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] font-bold text-center block border border-slate-200">
+                            Halaman Baru →
+                        </a>
+                    </div>
                 </div>
             `;
 
@@ -756,8 +781,71 @@
         }
     }
 
+    // FLYOUT POPOVER HANDLERS (MENEMPEL DI SAMPING TOOLBAR)
+    let currentActiveFlyout = null;
+
+    function toggleFlyout(name) {
+        // Jika sidebar sedang tertutup, otomatis buka sidebarnya
+        const wrapper = document.getElementById('side-toolbar-wrapper');
+        if (wrapper && wrapper.classList.contains('sidebar-collapsed')) {
+            toggleSideToolbar();
+        }
+
+        const flyout = document.getElementById(`flyout-${name}`);
+        const btn = document.getElementById(`tool-btn-${name}`);
+        if (!flyout) return;
+
+        // Jika tombol flyout yang sama diklik lagi, tutup
+        if (currentActiveFlyout === name) {
+            closeAllFlyouts();
+            return;
+        }
+
+        // Tutup flyout lainnya terlebih dahulu
+        closeAllFlyouts();
+
+        // Buka flyout yang dipilih
+        flyout.classList.remove('hidden');
+        currentActiveFlyout = name;
+
+        // Beri efek highlight ring & background aktif pada tombol di toolbar
+        if (btn) {
+            if (name === 'contact') {
+                btn.classList.add('ring-2', 'ring-red-500', 'bg-red-50', 'dark:bg-red-950/50');
+            } else if (name === 'filter') {
+                btn.classList.add('ring-2', 'ring-teal-500', 'bg-teal-50', 'dark:bg-teal-950/50');
+            } else if (name === 'basemap') {
+                btn.classList.add('ring-2', 'ring-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-950/50');
+            }
+        }
+    }
+
+    function closeAllFlyouts() {
+        ['contact', 'filter', 'basemap'].forEach(name => {
+            const flyout = document.getElementById(`flyout-${name}`);
+            if (flyout) flyout.classList.add('hidden');
+
+            const btn = document.getElementById(`tool-btn-${name}`);
+            if (btn) {
+                btn.classList.remove('ring-2', 'ring-red-500', 'ring-teal-500', 'ring-emerald-500', 'bg-red-50', 'bg-teal-50', 'bg-emerald-50', 'dark:bg-red-950/50', 'dark:bg-teal-950/50', 'dark:bg-emerald-950/50');
+            }
+        });
+        currentActiveFlyout = null;
+    }
+
+    // Klik di luar toolbar / flyout menutup flyout yang aktif
+    document.addEventListener('click', function(e) {
+        if (!currentActiveFlyout) return;
+        const flyoutsBox = document.getElementById('quick-flyouts-container');
+        const toolsBar = document.getElementById('quick-tools-bar');
+        if (flyoutsBox && !flyoutsBox.contains(e.target) && toolsBar && !toolsBar.contains(e.target)) {
+            closeAllFlyouts();
+        }
+    });
+
     // TOGGLE SIDE TOOLBAR (ALA COCONEXT)
     function toggleSideToolbar() {
+        closeAllFlyouts();
         const wrapper = document.getElementById('side-toolbar-wrapper');
         const arrow = document.getElementById('side-toolbar-arrow-icon');
         const btn = document.getElementById('side-toolbar-toggle-btn');
@@ -776,7 +864,7 @@
         }
     }
 
-    // MODAL HANDLERS
+    // MODAL HANDLERS (Untuk Tour & Lainnya)
     function toggleModal(modalId) {
         const el = document.getElementById(modalId);
         if (el) {
@@ -790,7 +878,17 @@
 
         document.getElementById('detail-icon').src = rep.icon;
         document.getElementById('detail-bencana').innerText = rep.bencana_nama;
-        document.getElementById('detail-status').innerText = rep.status;
+        const statusEl = document.getElementById('detail-status');
+        if (statusEl) {
+            statusEl.innerText = rep.status;
+            if (rep.status === 'Selesai') {
+                statusEl.className = 'inline-block text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+            } else if (rep.status === 'Handling') {
+                statusEl.className = 'inline-block text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+            } else {
+                statusEl.className = 'inline-block text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700';
+            }
+        }
         document.getElementById('detail-title').innerText = rep.title;
         document.getElementById('detail-wilayah').innerText = `Kecamatan ${rep.district}, Desa ${rep.village}`;
         document.getElementById('detail-time').innerText = rep.created_at_formatted;
@@ -818,6 +916,12 @@
             photoContainer.classList.remove('hidden');
         } else {
             photoContainer.classList.add('hidden');
+        }
+
+        // Link Halaman Lengkap Kejadian
+        const fullPageBtn = document.getElementById('detail-full-page-btn');
+        if (fullPageBtn) {
+            fullPageBtn.href = `{{ url('/kejadian') }}/${rep.id}`;
         }
 
         // Navigasi Google Maps

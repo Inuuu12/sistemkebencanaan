@@ -15,8 +15,16 @@ class PengungsianController extends Controller
      */
     public function dataPengungsian(Request $request)
     {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
         $query = PoskoPengungsian::with(['laporanBencana.bencana', 'kecamatan', 'kelurahan'])
             ->latest('id_posko');
+
+        // Scoping wilayah: Admin Kelurahan hanya melihat data posko kelurahannya
+        if ($isKelurahanAdmin) {
+            $query->where('id_kelurahan', $user->id_kelurahan);
+        }
 
         // Pencarian teks
         if ($request->filled('q')) {
@@ -31,7 +39,7 @@ class PengungsianController extends Controller
         }
 
         // Filter Kecamatan
-        if ($request->filled('kecamatan_id')) {
+        if (!$isKelurahanAdmin && $request->filled('kecamatan_id')) {
             $query->where('id_kecamatan', $request->kecamatan_id);
         }
 
@@ -42,21 +50,28 @@ class PengungsianController extends Controller
 
         $poskoList = $query->paginate(15)->withQueryString();
 
-        // Metrik Ringkasan Pengungsian
-        $totalPosko = PoskoPengungsian::count();
-        $poskoAktif = PoskoPengungsian::where('status', 'Aktif')->count();
-        $totalPengungsi = (int) PoskoPengungsian::sum('jumlah_pengungsi');
-        $totalKapasitas = (int) PoskoPengungsian::sum('kapasitas_maksimal');
-        $totalBalita = (int) PoskoPengungsian::sum('jumlah_balita');
-        $totalLansia = (int) PoskoPengungsian::sum('jumlah_lansia');
+        // Metrik Ringkasan Pengungsian Ter-scope
+        $basePosko = PoskoPengungsian::query();
+        if ($isKelurahanAdmin) {
+            $basePosko->where('id_kelurahan', $user->id_kelurahan);
+        }
+
+        $totalPosko = (clone $basePosko)->count();
+        $poskoAktif = (clone $basePosko)->where('status', 'Aktif')->count();
+        $totalPengungsi = (int) (clone $basePosko)->sum('jumlah_pengungsi');
+        $totalKapasitas = (int) (clone $basePosko)->sum('kapasitas_maksimal');
+        $totalBalita = (int) (clone $basePosko)->sum('jumlah_balita');
+        $totalLansia = (int) (clone $basePosko)->sum('jumlah_lansia');
 
         // Dropdown Data
         $districts = Kecamatan::with('kelurahan')->orderBy('nama_kecamatan')->get();
-        $laporanOptions = LaporanBencana::select('id_laporan', 'judul', 'id_kecamatan', 'id_kelurahan')
+        $laporanQuery = LaporanBencana::select('id_laporan', 'judul', 'id_kecamatan', 'id_kelurahan')
             ->with(['kecamatan:id_kecamatan,nama_kecamatan', 'kelurahan:id_kelurahan,nama_kelurahan'])
-            ->latest('id_laporan')
-            ->take(50)
-            ->get();
+            ->latest('id_laporan');
+        if ($isKelurahanAdmin) {
+            $laporanQuery->where('id_kelurahan', $user->id_kelurahan);
+        }
+        $laporanOptions = $laporanQuery->take(50)->get();
 
         return view('admin.pengungsian.index', compact(
             'poskoList',
@@ -67,18 +82,22 @@ class PengungsianController extends Controller
             'totalBalita',
             'totalLansia',
             'districts',
-            'laporanOptions'
+            'laporanOptions',
+            'isKelurahanAdmin'
         ));
     }
 
     public function storePengungsian(Request $request)
     {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
         $validated = $request->validate([
             'nama_posko' => 'required|string|max:150',
             'jenis_posko' => 'required|string|max:100',
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kecamatan' => 'required|exists:app_kecamatan,id_kecamatan',
-            'id_kelurahan' => 'nullable|exists:app_kelurahan,id_kelurahan',
+            'id_kecamatan' => 'required|exists:app_md_kecamatan,id_kecamatan',
+            'id_kelurahan' => 'nullable|exists:app_md_kelurahan,id_kelurahan',
             'alamat_lengkap' => 'required|string|max:1000',
             'kapasitas_maksimal' => 'required|integer|min:1',
             'jumlah_pengungsi' => 'required|integer|min:0',
@@ -90,6 +109,11 @@ class PengungsianController extends Controller
             'status' => 'required|in:Aktif,Penuh,Standby,Ditutup',
             'keterangan' => 'nullable|string|max:1000',
         ]);
+
+        if ($isKelurahanAdmin) {
+            $validated['id_kecamatan'] = $user->id_kecamatan;
+            $validated['id_kelurahan'] = $user->id_kelurahan;
+        }
 
         $validated['jumlah_balita'] = $validated['jumlah_balita'] ?? 0;
         $validated['jumlah_lansia'] = $validated['jumlah_lansia'] ?? 0;
@@ -103,13 +127,19 @@ class PengungsianController extends Controller
     public function updatePengungsian(Request $request, $id)
     {
         $posko = PoskoPengungsian::findOrFail($id);
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
+        if ($isKelurahanAdmin && $posko->id_kelurahan != $user->id_kelurahan) {
+            return back()->with('error', 'Akses ditolak: Anda hanya dapat memperbarui data posko pada kelurahan Anda.');
+        }
 
         $validated = $request->validate([
             'nama_posko' => 'required|string|max:150',
             'jenis_posko' => 'required|string|max:100',
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kecamatan' => 'required|exists:app_kecamatan,id_kecamatan',
-            'id_kelurahan' => 'nullable|exists:app_kelurahan,id_kelurahan',
+            'id_kecamatan' => 'required|exists:app_md_kecamatan,id_kecamatan',
+            'id_kelurahan' => 'nullable|exists:app_md_kelurahan,id_kelurahan',
             'alamat_lengkap' => 'required|string|max:1000',
             'kapasitas_maksimal' => 'required|integer|min:1',
             'jumlah_pengungsi' => 'required|integer|min:0',
@@ -121,6 +151,11 @@ class PengungsianController extends Controller
             'status' => 'required|in:Aktif,Penuh,Standby,Ditutup',
             'keterangan' => 'nullable|string|max:1000',
         ]);
+
+        if ($isKelurahanAdmin) {
+            $validated['id_kecamatan'] = $user->id_kecamatan;
+            $validated['id_kelurahan'] = $user->id_kelurahan;
+        }
 
         $validated['jumlah_balita'] = $validated['jumlah_balita'] ?? 0;
         $validated['jumlah_lansia'] = $validated['jumlah_lansia'] ?? 0;
@@ -134,6 +169,13 @@ class PengungsianController extends Controller
     public function destroyPengungsian($id)
     {
         $posko = PoskoPengungsian::findOrFail($id);
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
+        if ($isKelurahanAdmin && $posko->id_kelurahan != $user->id_kelurahan) {
+            return back()->with('error', 'Akses ditolak: Anda hanya dapat menghapus data posko pada kelurahan Anda.');
+        }
+
         $posko->delete();
 
         return redirect()->route('admin.pengungsian.index')

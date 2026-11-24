@@ -53,7 +53,7 @@
     @endif
 
     <!-- 2. REKAPITULASI METRIK KERUSAKAN NYATA -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <!-- Total Insiden -->
         <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Titik Kerusakan</span>

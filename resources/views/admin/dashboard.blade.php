@@ -36,6 +36,29 @@
         </div>
     </div>
 
+    @if(!empty($isKelurahanAdmin) && Auth::user()->kelurahan)
+    <!-- Banner Mode Wilayah Kelurahan -->
+    <div class="p-4 rounded-2xl bg-orange-50 border border-orange-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#ea5921] text-white flex items-center justify-center text-lg font-bold shrink-0 shadow-sm shadow-orange-500/20">
+                🏛️
+            </div>
+            <div>
+                <h4 class="text-sm font-extrabold text-slate-900">
+                    Monitoring Khusus: Kelurahan {{ Auth::user()->kelurahan->nama_kelurahan ?? '-' }} (Kec. {{ Auth::user()->kecamatan->nama_kecamatan ?? '-' }})
+                </h4>
+                <p class="text-xs text-slate-600 mt-0.5">
+                    Data aduan, sebaran peta, dampak, dan stok logistik di bawah ini ter-filter khusus wilayah kerja Anda.
+                </p>
+            </div>
+        </div>
+        <a href="{{ route('admin.laporan.validasi') }}" class="px-4 py-2 rounded-xl bg-[#ea5921] hover:bg-[#d94812] text-white text-xs font-bold transition shrink-0 flex items-center gap-1.5 shadow-sm shadow-orange-500/20">
+            <span>Validasi Aduan</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+    </div>
+    @endif
+
     <!-- 1. KARTU STATISTIK RINGKAS UTAMA -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
         

@@ -17,8 +17,21 @@ class KerusakanController extends Controller
      */
     public function dataKerusakan(Request $request)
     {
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
         $query = DampakKerusakan::with(['laporanBencana.bencana', 'laporanBencana.kecamatan', 'laporanBencana.kelurahan', 'kelurahan.kecamatan', 'recorder'])
             ->latest('id_dampak');
+
+        // Scoping wilayah: Admin Kelurahan hanya melihat kerusakan di kelurahannya
+        if ($isKelurahanAdmin) {
+            $query->where(function ($q) use ($user) {
+                $q->where('id_kelurahan', $user->id_kelurahan)
+                  ->orWhereHas('laporanBencana', function ($l) use ($user) {
+                      $l->where('id_kelurahan', $user->id_kelurahan);
+                  });
+            });
+        }
 
         // Pencarian teks
         if ($request->filled('q')) {
@@ -43,9 +56,7 @@ class KerusakanController extends Controller
         if ($request->filled('kecamatan_id')) {
             $kecId = $request->kecamatan_id;
             $query->where(function ($q) use ($kecId) {
-                $q->where('id_kelurahan', function ($sub) use ($kecId) {
-                    $sub->select('id_kelurahan')->from('app_kelurahan')->where('id_kecamatan', $kecId)->limit(1);
-                })->orWhereHas('kelurahan', function ($k) use ($kecId) {
+                $q->whereHas('kelurahan', function ($k) use ($kecId) {
                     $k->where('id_kecamatan', $kecId);
                 })->orWhereHas('laporanBencana', function ($l) use ($kecId) {
                     $l->where('id_kecamatan', $kecId);
@@ -68,22 +79,34 @@ class KerusakanController extends Controller
 
         $kerusakanList = $query->paginate(15)->withQueryString();
 
-        // Metrik Ringkasan Nyata Kerusakan
-        $totalUnit = (int) DampakKerusakan::sum('jumlah_unit');
-        $totalRusakBerat = (int) DampakKerusakan::where('tingkat_kerusakan', 'Berat')->sum('jumlah_unit');
-        $totalRusakSedang = (int) DampakKerusakan::where('tingkat_kerusakan', 'Sedang')->sum('jumlah_unit');
-        $totalRusakRingan = (int) DampakKerusakan::where('tingkat_kerusakan', 'Ringan')->sum('jumlah_unit');
-        $totalEstimasiKerugian = (float) DampakKerusakan::sum('estimasi_kerugian');
-        $totalInsidenKerusakan = DampakKerusakan::count();
+        // Metrik Ringkasan Nyata Kerusakan (Ter-scope)
+        $baseKerusakan = DampakKerusakan::query();
+        if ($isKelurahanAdmin) {
+            $baseKerusakan->where(function ($k) use ($user) {
+                $k->where('id_kelurahan', $user->id_kelurahan)
+                  ->orWhereHas('laporanBencana', function ($l) use ($user) {
+                      $l->where('id_kelurahan', $user->id_kelurahan);
+                  });
+            });
+        }
+
+        $totalUnit = (int) (clone $baseKerusakan)->sum('jumlah_unit');
+        $totalRusakBerat = (int) (clone $baseKerusakan)->where('tingkat_kerusakan', 'Berat')->sum('jumlah_unit');
+        $totalRusakSedang = (int) (clone $baseKerusakan)->where('tingkat_kerusakan', 'Sedang')->sum('jumlah_unit');
+        $totalRusakRingan = (int) (clone $baseKerusakan)->where('tingkat_kerusakan', 'Ringan')->sum('jumlah_unit');
+        $totalEstimasiKerugian = (float) (clone $baseKerusakan)->sum('estimasi_kerugian');
+        $totalInsidenKerusakan = (clone $baseKerusakan)->count();
 
         // Dropdown Data
         $disasters = Bencana::orderBy('nama_bencana')->get();
         $districts = Kecamatan::with('kelurahan')->orderBy('nama_kecamatan')->get();
-        $laporanOptions = LaporanBencana::select('id_laporan', 'judul', 'id_kecamatan', 'id_kelurahan')
+        $laporanQuery = LaporanBencana::select('id_laporan', 'judul', 'id_kecamatan', 'id_kelurahan')
             ->with(['kecamatan:id_kecamatan,nama_kecamatan', 'kelurahan:id_kelurahan,nama_kelurahan'])
-            ->latest('id_laporan')
-            ->take(50)
-            ->get();
+            ->latest('id_laporan');
+        if ($isKelurahanAdmin) {
+            $laporanQuery->where('id_kelurahan', $user->id_kelurahan);
+        }
+        $laporanOptions = $laporanQuery->take(50)->get();
 
         return view('admin.kerusakan.index', compact(
             'kerusakanList',
@@ -95,21 +118,29 @@ class KerusakanController extends Controller
             'totalInsidenKerusakan',
             'disasters',
             'districts',
-            'laporanOptions'
+            'laporanOptions',
+            'isKelurahanAdmin'
         ));
     }
 
     public function storeKerusakan(Request $request)
     {
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
         $validated = $request->validate([
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kelurahan' => 'required|exists:app_kelurahan,id_kelurahan',
+            'id_kelurahan' => 'required|exists:app_md_kelurahan,id_kelurahan',
             'jenis_kerusakan' => 'required|string|max:100',
             'tingkat_kerusakan' => 'required|in:Berat,Sedang,Ringan',
             'jumlah_unit' => 'required|integer|min:1',
             'estimasi_kerugian' => 'nullable|numeric|min:0',
             'deskripsi' => 'nullable|string|max:1000',
         ]);
+
+        if ($isKelurahanAdmin) {
+            $validated['id_kelurahan'] = $user->id_kelurahan;
+        }
 
         $validated['dicatat_oleh'] = Auth::id() ?: 1;
         $validated['estimasi_kerugian'] = $validated['estimasi_kerugian'] ?? 0;
@@ -123,16 +154,26 @@ class KerusakanController extends Controller
     public function updateKerusakan(Request $request, $id)
     {
         $dampak = DampakKerusakan::findOrFail($id);
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
+        if ($isKelurahanAdmin && $dampak->id_kelurahan != $user->id_kelurahan) {
+            return back()->with('error', 'Akses ditolak: Anda hanya dapat memperbarui data kerusakan pada kelurahan Anda.');
+        }
 
         $validated = $request->validate([
             'id_laporan' => 'nullable|exists:app_laporan_bencana,id_laporan',
-            'id_kelurahan' => 'required|exists:app_kelurahan,id_kelurahan',
+            'id_kelurahan' => 'required|exists:app_md_kelurahan,id_kelurahan',
             'jenis_kerusakan' => 'required|string|max:100',
             'tingkat_kerusakan' => 'required|in:Berat,Sedang,Ringan',
             'jumlah_unit' => 'required|integer|min:1',
             'estimasi_kerugian' => 'nullable|numeric|min:0',
             'deskripsi' => 'nullable|string|max:1000',
         ]);
+
+        if ($isKelurahanAdmin) {
+            $validated['id_kelurahan'] = $user->id_kelurahan;
+        }
 
         $validated['estimasi_kerugian'] = $validated['estimasi_kerugian'] ?? 0;
         $dampak->update($validated);
@@ -144,6 +185,13 @@ class KerusakanController extends Controller
     public function destroyKerusakan($id)
     {
         $dampak = DampakKerusakan::findOrFail($id);
+        $user = Auth::user();
+        $isKelurahanAdmin = $user && in_array($user->role, ['ADMIN_KELURAHAN', 'KELURAHAN']) && $user->id_kelurahan;
+
+        if ($isKelurahanAdmin && $dampak->id_kelurahan != $user->id_kelurahan) {
+            return back()->with('error', 'Akses ditolak: Anda hanya dapat menghapus data kerusakan pada kelurahan Anda.');
+        }
+
         $dampak->delete();
 
         return redirect()->route('admin.kerusakan.index')
